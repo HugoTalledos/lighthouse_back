@@ -26,7 +26,7 @@ class ImageBuilderService:
     async def build(self, brief: ImageBrief) -> ImageBuildResult:
         prompts = PromptBuilder().build_prompts(brief)
         results = await asyncio.gather(
-            *[self._generator.generate(p, 1200, 628) for p in prompts],
+            *[self._generator.generate(prompt, 1200, 628) for prompt in prompts],
             return_exceptions=True,
         )
 
