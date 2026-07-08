@@ -28,7 +28,7 @@ class DalleImageGenerator(ImageGeneratorPort):
                     "model": "dall-e-3",
                     "prompt": prompt,
                     "n": 1,
-                    "size": "1792x1024",
+                    "size": f"{width}x{height}",
                     "response_format": "url",
                 },
             )
@@ -42,6 +42,6 @@ class DalleImageGenerator(ImageGeneratorPort):
             provider="dalle3",
             image_bytes=image_response.content,
             prompt_used=prompt,
-            width=1792,
-            height=1024,
+            width=width,
+            height=height,
         )
