@@ -10,14 +10,19 @@ from .infrastructure.pillow_composer import PillowImageComposer
 from .infrastructure.firebase_storage import FirebaseStorageAdapter
 
 
+_GENERATORS = {
+    "dalle3": DalleImageGenerator,
+    "vertex": VertexImageGenerator,
+}
+
+
 def _build_service() -> ImageBuilderService:
     provider = os.getenv("IMAGE_PROVIDER", "dalle3")
-    if provider == "dalle3":
-        generator = DalleImageGenerator()
-    elif provider == "vertex":
-        generator = VertexImageGenerator()
-    else:
-        raise ValueError(f"Unknown IMAGE_PROVIDER: {provider!r}. Valid values: dalle3, vertex")
+    generator_class = _GENERATORS.get(provider)
+    if generator_class is None:
+        valid = ", ".join(_GENERATORS)
+        raise ValueError(f"Unknown IMAGE_PROVIDER: {provider!r}. Valid values: {valid}")
+    generator = generator_class()
     composer = PillowImageComposer()
     storage = FirebaseStorageAdapter()
     return ImageBuilderService(generator, composer, storage)
