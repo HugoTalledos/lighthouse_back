@@ -12,7 +12,12 @@ from .infrastructure.firebase_storage import FirebaseStorageAdapter
 
 def _build_service() -> ImageBuilderService:
     provider = os.getenv("IMAGE_PROVIDER", "dalle3")
-    generator = DalleImageGenerator() if provider == "dalle3" else VertexImageGenerator()
+    if provider == "dalle3":
+        generator = DalleImageGenerator()
+    elif provider == "vertex":
+        generator = VertexImageGenerator()
+    else:
+        raise ValueError(f"Unknown IMAGE_PROVIDER: {provider!r}. Valid values: dalle3, vertex")
     composer = PillowImageComposer()
     storage = FirebaseStorageAdapter()
     return ImageBuilderService(generator, composer, storage)
@@ -28,4 +33,4 @@ async def image_builder_tool(brief_dict: dict) -> dict:
     brief = ImageBrief.model_validate(brief_dict)
     service = _build_service()
     result = await service.build(brief)
-    return result.model_dump()
+    return result.model_dump(mode="json")

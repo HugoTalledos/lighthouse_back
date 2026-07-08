@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 import os
 import firebase_admin
 from firebase_admin import storage as fb_storage
@@ -18,6 +19,6 @@ class FirebaseStorageAdapter(ImageStoragePort):
     async def upload(self, image_bytes: bytes, filename: str, project_id: str) -> str:
         bucket = fb_storage.bucket(self._bucket_name)
         blob = bucket.blob(f"creatives/{project_id}/{filename}")
-        blob.upload_from_string(image_bytes, content_type="image/png")
-        blob.make_public()
+        await asyncio.to_thread(blob.upload_from_string, image_bytes, content_type="image/png")
+        await asyncio.to_thread(blob.make_public)
         return blob.public_url
