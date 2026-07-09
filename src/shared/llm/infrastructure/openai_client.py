@@ -55,7 +55,7 @@ class OpenAIClient(LLMClientPort):
     async def generate_structured(
         self,
         prompt: str,
-        response_model: type[T],
+        response_type: type[T],
         *,
         system: str | None = None,
         temperature: float = 0.4,
@@ -65,8 +65,8 @@ class OpenAIClient(LLMClientPort):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        schema = response_model.model_json_schema()
-        model_name = response_model.__name__
+        schema = response_type.model_json_schema()
+        response_name = response_type.__name__
 
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             response = await client.post(
@@ -79,7 +79,7 @@ class OpenAIClient(LLMClientPort):
                     "response_format": {
                         "type": "json_schema",
                         "json_schema": {
-                            "name": model_name,
+                            "name": response_name,
                             "schema": schema,
                             "strict": True,
                         },
@@ -90,6 +90,6 @@ class OpenAIClient(LLMClientPort):
 
         content = response.json()["choices"][0]["message"]["content"]
         try:
-            return response_model.model_validate_json(content)
+            return response_type.model_validate_json(content)
         except Exception as e:
-            raise ValueError(f"Failed to parse {model_name} from LLM response: {e}") from e
+            raise ValueError(f"Failed to parse {response_name} from LLM response: {e}") from e
