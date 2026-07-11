@@ -13,9 +13,15 @@ class CampaignBuilderService:
         try:
             campaign = await self._llm.generate_structured(user, Campaign, system=system)
             return CampaignConfigResult(
-                brief=brief, campaign=campaign, status="success", errors=[]
+                brief=brief, 
+                campaign=campaign,
+                status="success",
+                errors=[]
             )
         except Exception as e:
             return CampaignConfigResult(
-                brief=brief, campaign=None, status="failed", errors=[str(e)]
+                brief=brief,
+                campaign=None,
+                status="failed",
+                errors=[str(e)],
             )
