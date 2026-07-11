@@ -4,10 +4,12 @@ import os
 from .domain.ports import LLMClientPort
 from .infrastructure.openai_client import OpenAIClient
 from .infrastructure.anthropic_client import AnthropicClient
+from .infrastructure.ollama_local_client import OllamaLocalClient
 
 _CLIENTS = {
     "openai": OpenAIClient,
     "anthropic": AnthropicClient,
+    "ollama": OllamaLocalClient,
 }
 
 
