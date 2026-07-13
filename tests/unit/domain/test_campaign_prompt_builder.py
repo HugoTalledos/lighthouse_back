@@ -1,6 +1,6 @@
 from __future__ import annotations
-from src.agent.campaign_builder.domain.models import CampaignBrief
-from src.agent.campaign_builder.domain.prompt_builder import build_campaign_prompt
+from src.agent.tools.campaign_builder.domain.models import CampaignBrief
+from src.agent.tools.campaign_builder.domain.prompt_builder import build_campaign_prompt
 
 
 def _brief(**overrides):

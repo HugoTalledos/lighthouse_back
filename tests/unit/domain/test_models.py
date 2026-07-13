@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from src.agent.image_builder.domain.models import (
+from src.agent.tools.image_builder.domain.models import (
     ImageBrief, GeneratedImage, ComposedCreative, ImageBuildResult,
 )
 

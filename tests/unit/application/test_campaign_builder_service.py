@@ -1,12 +1,12 @@
 from __future__ import annotations
 import pytest
 from src.shared.llm.domain.ports import LLMClientPort
-from src.agent.campaign_builder.domain.models import (
+from src.agent.tools.campaign_builder.domain.models import (
     CampaignBrief, Campaign, CampaignObjective, CampaignConfigResult,
     AdSet, BillingEvent, OptimizationGoal, Targeting, Placements, Ad,
     AdCreativeCopy, CallToAction,
 )
-from src.agent.campaign_builder.application.campaign_builder_service import CampaignBuilderService
+from src.agent.tools.campaign_builder.application.campaign_builder_service import CampaignBuilderService
 
 
 def _brief():

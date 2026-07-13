@@ -48,7 +48,7 @@ No extra config needed; the SDK picks up the environment's identity automaticall
 ### As a LangGraph tool
 
 ```python
-from src.agent.image_builder.image_builder_tool import image_builder_tool
+from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
 
 brief_dict = {
     "project_id": "my-campaign-001",
@@ -77,7 +77,7 @@ for creative in result["creatives"]:
 
 ```python
 from langgraph.prebuilt import create_react_agent
-from src.agent.image_builder.image_builder_tool import image_builder_tool
+from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
 
 agent = create_react_agent(model, tools=[image_builder_tool])
 ```

@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pytest
 from pydantic import ValidationError
-from src.agent.campaign_builder.domain.models import (
+from src.agent.tools.campaign_builder.domain.models import (
     Targeting, Gender, AdCreativeCopy, CallToAction, AdSet, BillingEvent,
     OptimizationGoal, Placements, Ad, CampaignBrief, Campaign, CampaignObjective,
     CampaignConfigResult,

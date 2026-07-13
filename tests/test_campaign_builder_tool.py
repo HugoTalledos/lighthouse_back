@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-from src.agent.campaign_builder.domain.models import (
+from src.agent.tools.campaign_builder.domain.models import (
     CampaignBrief, Campaign, CampaignObjective, CampaignConfigResult,
     AdSet, BillingEvent, OptimizationGoal, Targeting, Placements, Ad,
     AdCreativeCopy, CallToAction,
@@ -54,10 +54,10 @@ async def test_tool_returns_dict_with_status(monkeypatch):
     mock_client.generate_structured = AsyncMock(return_value=_canned_campaign())
 
     with patch(
-        "src.agent.campaign_builder.campaign_builder_tool.build_llm_client",
+        "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
     ):
-        from src.agent.campaign_builder.campaign_builder_tool import campaign_builder_tool
+        from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
 
     assert result["status"] == "success"
@@ -72,10 +72,10 @@ async def test_tool_result_is_serializable(monkeypatch):
     mock_client.generate_structured = AsyncMock(return_value=_canned_campaign())
 
     with patch(
-        "src.agent.campaign_builder.campaign_builder_tool.build_llm_client",
+        "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
     ):
-        from src.agent.campaign_builder.campaign_builder_tool import campaign_builder_tool
+        from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
 
     import json
@@ -83,7 +83,7 @@ async def test_tool_result_is_serializable(monkeypatch):
 
 
 async def test_tool_raises_on_invalid_brief():
-    from src.agent.campaign_builder.campaign_builder_tool import campaign_builder_tool
+    from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
     with pytest.raises(Exception):
         await campaign_builder_tool.ainvoke({"brief_dict": {"business_name": "Only this"}})
 
@@ -96,10 +96,10 @@ async def test_tool_captures_llm_error_in_result(monkeypatch):
     mock_client.generate_structured = AsyncMock(side_effect=RuntimeError("LLM timeout"))
 
     with patch(
-        "src.agent.campaign_builder.campaign_builder_tool.build_llm_client",
+        "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
     ):
-        from src.agent.campaign_builder.campaign_builder_tool import campaign_builder_tool
+        from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
 
     assert result["status"] == "failed"

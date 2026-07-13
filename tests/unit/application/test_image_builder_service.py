@@ -1,11 +1,11 @@
 import pytest
-from src.agent.image_builder.domain.models import (
+from src.agent.tools.image_builder.domain.models import (
     ImageBrief, GeneratedImage, ComposedCreative, ImageBuildResult,
 )
-from src.agent.image_builder.domain.ports import (
+from src.agent.tools.image_builder.domain.ports import (
     ImageGeneratorPort, ImageComposerPort, ImageStoragePort,
 )
-from src.agent.image_builder.application.image_builder_service import ImageBuilderService
+from src.agent.tools.image_builder.application.image_builder_service import ImageBuilderService
 
 
 def _brief(n_images=2):

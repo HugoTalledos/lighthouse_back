@@ -32,7 +32,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```python
-from src.agent.campaign_builder.campaign_builder_tool import campaign_builder_tool
+from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
 
 brief_dict = {
     "project_id": "my-campaign-001",

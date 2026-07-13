@@ -1,5 +1,5 @@
 import pytest
-from src.agent.image_builder.infrastructure.vertex_generator import VertexImageGenerator
+from src.agent.tools.image_builder.infrastructure.vertex_generator import VertexImageGenerator
 
 
 async def test_generate_raises_not_implemented():

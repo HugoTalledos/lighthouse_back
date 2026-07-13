@@ -1,5 +1,5 @@
-from src.agent.image_builder.domain.models import ImageBrief
-from src.agent.image_builder.domain.prompt_builder import PromptBuilder
+from src.agent.tools.image_builder.domain.models import ImageBrief
+from src.agent.tools.image_builder.domain.prompt_builder import PromptBuilder
 
 
 def _brief(n_images=3):

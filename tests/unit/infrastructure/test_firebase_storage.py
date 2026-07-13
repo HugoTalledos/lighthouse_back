@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from src.agent.image_builder.infrastructure.firebase_storage import FirebaseStorageAdapter
+from src.agent.tools.image_builder.infrastructure.firebase_storage import FirebaseStorageAdapter
 
 
 def test_missing_bucket_raises(monkeypatch):
@@ -18,8 +18,8 @@ async def test_upload_calls_make_public_and_returns_url(monkeypatch):
     fake_bucket = MagicMock()
     fake_bucket.blob.return_value = fake_blob
 
-    with patch("src.agent.image_builder.infrastructure.firebase_storage.firebase_admin") as mock_admin, \
-         patch("src.agent.image_builder.infrastructure.firebase_storage.fb_storage") as mock_storage:
+    with patch("src.agent.tools.image_builder.infrastructure.firebase_storage.firebase_admin") as mock_admin, \
+         patch("src.agent.tools.image_builder.infrastructure.firebase_storage.fb_storage") as mock_storage:
         mock_admin._apps = {"[DEFAULT]": True}
         mock_storage.bucket.return_value = fake_bucket
 
