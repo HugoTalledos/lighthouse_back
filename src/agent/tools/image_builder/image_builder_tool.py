@@ -4,11 +4,11 @@ from langchain_core.tools import tool
 
 from .domain.models import ImageBrief
 from .application.image_builder_service import ImageBuilderService
-from .infrastructure.dalle_generator import DalleImageGenerator
-from .infrastructure.vertex_generator import VertexImageGenerator
-from .infrastructure.ollama_generator import OllamaImageGenerator
-from .infrastructure.pillow_composer import PillowImageComposer
-from .infrastructure.firebase_storage import FirebaseStorageAdapter
+from .infrastructure.generators.dalle_generator import DalleImageGenerator
+from .infrastructure.generators.vertex_generator import VertexImageGenerator
+from .infrastructure.generators.ollama_generator import OllamaImageGenerator
+from .infrastructure.composer.pillow_composer import PillowImageComposer
+from .infrastructure.storage.firebase_storage import FirebaseStorageAdapter
 
 
 _GENERATORS = {

@@ -1,7 +1,7 @@
 import pytest
 import httpx
 from pytest_httpx import HTTPXMock
-from src.agent.tools.image_builder.infrastructure.dalle_generator import DalleImageGenerator
+from src.agent.tools.image_builder.infrastructure.generators.dalle_generator import DalleImageGenerator
 
 
 FAKE_PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100  # minimal fake PNG bytes

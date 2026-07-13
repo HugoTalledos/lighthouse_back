@@ -3,7 +3,7 @@ import io
 import pytest
 from PIL import Image
 from src.agent.tools.image_builder.domain.models import ImageBrief, GeneratedImage
-from src.agent.tools.image_builder.infrastructure.pillow_composer import PillowImageComposer
+from src.agent.tools.image_builder.infrastructure.composer.pillow_composer import PillowImageComposer
 
 
 def _make_png_bytes(width=1792, height=1024) -> bytes:

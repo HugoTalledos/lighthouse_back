@@ -4,7 +4,7 @@ import os
 import firebase_admin
 from firebase_admin import storage as fb_storage
 
-from ..domain.ports import ImageStoragePort
+from ...domain.ports import ImageStoragePort
 
 
 class FirebaseStorageAdapter(ImageStoragePort):

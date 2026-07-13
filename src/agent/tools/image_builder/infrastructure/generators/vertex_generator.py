@@ -1,5 +1,5 @@
-from ..domain.models import GeneratedImage
-from ..domain.ports import ImageGeneratorPort
+from ...domain.models import GeneratedImage
+from ...domain.ports import ImageGeneratorPort
 
 
 class VertexImageGenerator(ImageGeneratorPort):

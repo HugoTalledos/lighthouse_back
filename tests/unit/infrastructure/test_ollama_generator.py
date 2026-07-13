@@ -4,7 +4,7 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from src.agent.tools.image_builder.infrastructure.ollama_generator import (
+from src.agent.tools.image_builder.infrastructure.generators.ollama_generator import (
     OllamaImageGenerator,
 )
 

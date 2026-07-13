@@ -3,8 +3,8 @@ import base64
 import os
 import httpx
 
-from ..domain.models import GeneratedImage
-from ..domain.ports import ImageGeneratorPort
+from ...domain.models import GeneratedImage
+from ...domain.ports import ImageGeneratorPort
 
 _TIMEOUT = 180.0
 

@@ -2,8 +2,8 @@ from __future__ import annotations
 import os
 import httpx
 
-from ..domain.models import GeneratedImage
-from ..domain.ports import ImageGeneratorPort
+from ...domain.models import GeneratedImage
+from ...domain.ports import ImageGeneratorPort
 
 _DALLE_URL = "https://api.openai.com/v1/images/generations"
 _TIMEOUT = 60.0

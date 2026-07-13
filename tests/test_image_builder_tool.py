@@ -66,10 +66,10 @@ def test_build_service_selects_dalle_by_default(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
 
-    with patch("src.agent.tools.image_builder.infrastructure.firebase_storage.firebase_admin") as m:
+    with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
         from src.agent.tools.image_builder.image_builder_tool import _build_service
-        from src.agent.tools.image_builder.infrastructure.dalle_generator import DalleImageGenerator
+        from src.agent.tools.image_builder.infrastructure.generators.dalle_generator import DalleImageGenerator
         service = _build_service()
         assert isinstance(service._generator, DalleImageGenerator)
 
@@ -78,9 +78,9 @@ def test_build_service_selects_vertex(monkeypatch):
     monkeypatch.setenv("IMAGE_PROVIDER", "vertex")
     monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
 
-    with patch("src.agent.tools.image_builder.infrastructure.firebase_storage.firebase_admin") as m:
+    with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
         from src.agent.tools.image_builder.image_builder_tool import _build_service
-        from src.agent.tools.image_builder.infrastructure.vertex_generator import VertexImageGenerator
+        from src.agent.tools.image_builder.infrastructure.generators.vertex_generator import VertexImageGenerator
         service = _build_service()
         assert isinstance(service._generator, VertexImageGenerator)

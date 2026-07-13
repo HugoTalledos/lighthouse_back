@@ -3,8 +3,8 @@ import io
 from typing import Union, Tuple
 from PIL import Image, ImageDraw, ImageFont
 
-from ..domain.models import GeneratedImage, ImageBrief
-from ..domain.ports import ImageComposerPort
+from ...domain.models import GeneratedImage, ImageBrief
+from ...domain.ports import ImageComposerPort
 
 _TARGET_W, _TARGET_H = 1200, 628
 _BAR_H = 140
