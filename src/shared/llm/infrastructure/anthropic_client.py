@@ -26,3 +26,13 @@ class AnthropicClient(LLMClientPort):
         temperature: float = 0.4,
     ) -> T:
         raise NotImplementedError("TODO: Anthropic integration")
+
+    async def generate_structured_from_schema(
+        self,
+        prompt: str,
+        schema: dict,
+        *,
+        system: str | None = None,
+        temperature: float = 0.4,
+    ) -> dict:
+        raise NotImplementedError("TODO: Anthropic integration")

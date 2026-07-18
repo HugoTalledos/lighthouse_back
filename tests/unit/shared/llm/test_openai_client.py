@@ -122,3 +122,61 @@ async def test_api_error_raises(monkeypatch, httpx_mock: HTTPXMock):
     client = OpenAIClient()
     with pytest.raises(httpx.HTTPStatusError):
         await client.complete("hello")
+
+
+async def test_generate_structured_from_schema_returns_dict(monkeypatch, httpx_mock: HTTPXMock):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    schema = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}},
+        "required": ["name"],
+        "additionalProperties": False,
+    }
+    httpx_mock.add_response(
+        method="POST",
+        url="https://api.openai.com/v1/chat/completions",
+        json={"choices": [{"message": {"content": '{"name": "red"}'}}]},
+    )
+    client = OpenAIClient()
+    result = await client.generate_structured_from_schema("What color?", schema)
+    assert result == {"name": "red"}
+
+
+async def test_generate_structured_from_schema_sends_provided_schema(monkeypatch, httpx_mock: HTTPXMock):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    schema = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}},
+        "required": ["name"],
+        "additionalProperties": False,
+    }
+    httpx_mock.add_response(
+        method="POST",
+        url="https://api.openai.com/v1/chat/completions",
+        json={"choices": [{"message": {"content": '{"name": "blue"}'}}]},
+    )
+    client = OpenAIClient()
+    await client.generate_structured_from_schema("pick a color", schema)
+    request = httpx_mock.get_requests()[0]
+    body = json.loads(request.content)
+    assert body["response_format"]["type"] == "json_schema"
+    assert body["response_format"]["json_schema"]["schema"] == schema
+    assert body["response_format"]["json_schema"]["strict"] is True
+
+
+async def test_generate_structured_from_schema_raises_on_invalid_response(monkeypatch, httpx_mock: HTTPXMock):
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    schema = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}},
+        "required": ["name"],
+        "additionalProperties": False,
+    }
+    httpx_mock.add_response(
+        method="POST",
+        url="https://api.openai.com/v1/chat/completions",
+        json={"choices": [{"message": {"content": "not valid json"}}]},
+    )
+    client = OpenAIClient()
+    with pytest.raises(ValueError, match="Failed to parse"):
+        await client.generate_structured_from_schema("prompt", schema)

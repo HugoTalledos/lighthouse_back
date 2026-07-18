@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import json
 from typing import TypeVar
 import httpx
 from pydantic import BaseModel
@@ -75,3 +76,35 @@ class OllamaLocalClient(LLMClientPort):
             raise ValueError(
                 f"Failed to parse {response_model.__name__} from LLM response: {e}"
             ) from e
+
+    async def generate_structured_from_schema(
+        self,
+        prompt: str,
+        schema: dict,
+        *,
+        system: str | None = None,
+        temperature: float = 0.4,
+    ) -> dict:
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            response = await client.post(
+                f"{self._base_url}/api/chat",
+                json={
+                    "model": self._model,
+                    "messages": messages,
+                    "stream": False,
+                    "format": schema,
+                    "options": {"temperature": temperature},
+                },
+            )
+            response.raise_for_status()
+
+        content = response.json()["message"]["content"]
+        try:
+            return json.loads(content)
+        except Exception as e:
+            raise ValueError(f"Failed to parse structured response from schema: {e}") from e

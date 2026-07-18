@@ -48,3 +48,10 @@ async def test_anthropic_generate_structured_raises_not_implemented(monkeypatch)
     client = build_llm_client()
     with pytest.raises(NotImplementedError):
         await client.generate_structured("prompt", Dummy)
+
+
+async def test_anthropic_generate_structured_from_schema_raises_not_implemented(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "anthropic")
+    client = build_llm_client()
+    with pytest.raises(NotImplementedError):
+        await client.generate_structured_from_schema("prompt", {"type": "object"})

@@ -25,3 +25,13 @@ class LLMClientPort(ABC):
         system: str | None = None,
         temperature: float = 0.4,
     ) -> T: ...
+
+    @abstractmethod
+    async def generate_structured_from_schema(
+        self,
+        prompt: str,
+        schema: dict,
+        *,
+        system: str | None = None,
+        temperature: float = 0.4,
+    ) -> dict: ...

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import json
 from typing import TypeVar
 import httpx
 from pydantic import BaseModel
@@ -93,3 +94,42 @@ class OpenAIClient(LLMClientPort):
             return response_type.model_validate_json(content)
         except Exception as e:
             raise ValueError(f"Failed to parse {response_name} from LLM response: {e}") from e
+
+    async def generate_structured_from_schema(
+        self,
+        prompt: str,
+        schema: dict,
+        *,
+        system: str | None = None,
+        temperature: float = 0.4,
+    ) -> dict:
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            response = await client.post(
+                _CHAT_URL,
+                headers=self._headers(),
+                json={
+                    "model": self._model,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "response_format": {
+                        "type": "json_schema",
+                        "json_schema": {
+                            "name": "StructuredResponse",
+                            "schema": schema,
+                            "strict": True,
+                        },
+                    },
+                },
+            )
+            response.raise_for_status()
+
+        content = response.json()["choices"][0]["message"]["content"]
+        try:
+            return json.loads(content)
+        except Exception as e:
+            raise ValueError(f"Failed to parse structured response from schema: {e}") from e
