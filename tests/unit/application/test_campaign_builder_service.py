@@ -61,6 +61,9 @@ class FakeLLMClient(LLMClientPort):
             raise self._raise
         return self._return
 
+    async def generate_structured_from_schema(self, prompt, schema, *, system=None, temperature=0.4):
+        raise NotImplementedError
+
 
 async def test_success_path_returns_success_status():
     service = CampaignBuilderService(FakeLLMClient(return_value=_canned_campaign()))
