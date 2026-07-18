@@ -2,7 +2,7 @@ from __future__ import annotations
 import shutil
 from datetime import datetime
 
-from ..domain.models import PageComposition, LandingPromoteResult
+from ..domain.models import LandingPromoteResult
 from ..domain.ports import TemplateSourcePort, LandingStoragePort
 from .page_renderer import render
 
@@ -20,7 +20,7 @@ class LandingPromotionService:
         self._template_repo = template_repo
         self._template_ref = template_ref
 
-    async def promote(self, project_id: str, composition: PageComposition) -> LandingPromoteResult:
+    async def promote(self, project_id: str, composition: dict) -> LandingPromoteResult:
         project_dir = None
         try:
             project_dir = await self._template_source.fetch(self._template_repo, self._template_ref)

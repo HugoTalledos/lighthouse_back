@@ -1,11 +1,13 @@
 from __future__ import annotations
 import json
 import shutil
+import jsonschema
 
 from src.shared.llm.domain.ports import LLMClientPort
-from ..domain.models import LandingBrief, PageComposition, LandingBuildResult
+from ..domain.models import LandingBrief, LandingBuildResult
 from ..domain.ports import TemplateSourcePort, StaticBuilderPort, HostingPort
 from ..domain.prompt_builder import build_landing_prompt
+from .agent_docs import read_page_json_doc, read_page_schema
 from .page_renderer import render
 
 
@@ -31,13 +33,16 @@ class LandingBuilderService:
         composition = None
         try:
             project_dir = await self._template_source.fetch(self._template_repo, self._template_ref)
-            system, user = build_landing_prompt(brief)
+            page_json_doc = read_page_json_doc(project_dir)
+            schema = read_page_schema(project_dir)
+            system, user = build_landing_prompt(brief, page_json_doc)
             print("=== [DEBUG] JSON de entrada (brief) ===")
             print(json.dumps(brief.model_dump(mode="json"), indent=2, ensure_ascii=False))
-            composition = await self._llm.generate_structured(user, PageComposition, system=system)
-            composition.theme.logo_text = brief.business_name
+            composition = await self._llm.generate_structured_from_schema(user, schema, system=system)
+            jsonschema.validate(instance=composition, schema=schema)
+            composition["theme"]["logo_text"] = brief.business_name
             print("=== [DEBUG] JSON decidido por el modelo (composition) ===")
-            print(json.dumps(composition.model_dump(mode="json"), indent=2, ensure_ascii=False))
+            print(json.dumps(composition, indent=2, ensure_ascii=False))
             render(composition, project_dir)
 
             build_result = await self._builder.build(project_dir)

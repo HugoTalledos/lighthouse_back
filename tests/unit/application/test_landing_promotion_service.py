@@ -1,8 +1,6 @@
 from __future__ import annotations
 import os
-from src.agent.tools.landing_builder.domain.models import (
-    Theme, HeroSection, FooterSection, PageComposition, LandingPromoteResult,
-)
+from src.agent.tools.landing_builder.domain.models import LandingPromoteResult
 from src.agent.tools.landing_builder.domain.ports import TemplateSourcePort, LandingStoragePort
 from src.agent.tools.landing_builder.application.landing_promotion_service import (
     LandingPromotionService,
@@ -10,13 +8,16 @@ from src.agent.tools.landing_builder.application.landing_promotion_service impor
 
 
 def _composition():
-    return PageComposition(
-        theme=Theme(primary_color="#111", secondary_color="#eee", font_family="Inter"),
-        sections=[
-            HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start"),
-            FooterSection(type="footer", business_name="Acme", links=[], social_links=[]),
+    return {
+        "theme": {
+            "primary_color": "#111", "secondary_color": "#eee", "font_family": "Inter",
+            "logo_url": None, "logo_text": None, "logo_icon": None,
+        },
+        "sections": [
+            {"type": "hero", "headline": "Welcome", "subheadline": "Sub", "cta_text": "Start"},
+            {"type": "footer", "business_name": "Acme", "links": [], "social_links": []},
         ],
-    )
+    }
 
 
 class FakeTemplateSource(TemplateSourcePort):

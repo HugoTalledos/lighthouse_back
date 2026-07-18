@@ -2,10 +2,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 from src.agent.tools.landing_builder.domain.models import (
-    LandingBrief, Theme, HeroSection, FeaturesSection, FeatureItem,
-    TestimonialsSection, Testimonial, PricingSection, PricingPlan,
-    FAQSection, FAQItem, CTASection, FooterSection, FooterLink, SocialLink,
-    PageComposition, LandingBuildResult, LandingPromoteResult,
+    LandingBrief, LandingBuildResult, LandingPromoteResult,
 )
 
 
@@ -20,19 +17,19 @@ def _brief(**overrides):
     return LandingBrief(**{**defaults, **overrides})
 
 
-def _theme():
-    return Theme(primary_color="#111111", secondary_color="#eeeeee", font_family="Inter")
+def _composition():
+    return {
+        "theme": {
+            "primary_color": "#111111", "secondary_color": "#eeeeee", "font_family": "Inter",
+            "logo_url": None, "logo_text": None, "logo_icon": None,
+        },
+        "sections": [
+            {"type": "hero", "headline": "Welcome", "subheadline": "Sub", "image_url": None,
+             "cta_text": "Start", "cta_url": None},
+            {"type": "footer", "business_name": "Acme", "links": [], "social_links": []},
+        ],
+    }
 
-
-def _hero():
-    return HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start")
-
-
-def _footer():
-    return FooterSection(type="footer", business_name="Acme", links=[], social_links=[])
-
-
-# --- LandingBrief ---
 
 def test_brief_optional_fields_default_to_none():
     brief = _brief()
@@ -48,114 +45,22 @@ def test_brief_requires_business_name():
         )
 
 
-# --- Section discriminated union ---
-
-def test_hero_section_type_is_required():
-    with pytest.raises(ValidationError):
-        HeroSection(headline="Welcome", subheadline="Sub", cta_text="Start")
-
-
-def test_hero_section_type():
-    assert _hero().type == "hero"
-
-
-def test_page_composition_dispatches_by_type():
-    composition = PageComposition(
-        theme=_theme(),
-        sections=[
-            {"type": "hero", "headline": "H", "subheadline": "S", "cta_text": "Go"},
-            {"type": "footer", "business_name": "Acme", "links": [], "social_links": []},
-        ],
-    )
-    assert isinstance(composition.sections[0], HeroSection)
-    assert isinstance(composition.sections[1], FooterSection)
-
-
-def test_page_composition_rejects_unknown_section_type():
-    with pytest.raises(ValidationError):
-        PageComposition(theme=_theme(), sections=[{"type": "banner", "headline": "H"}])
-
-
-def test_page_composition_requires_at_least_one_section():
-    with pytest.raises(ValidationError):
-        PageComposition(theme=_theme(), sections=[])
-
-
-def test_page_composition_preserves_section_order():
-    composition = PageComposition(theme=_theme(), sections=[_hero(), _footer()])
-    assert composition.sections[0].type == "hero"
-    assert composition.sections[1].type == "footer"
-
-
-# --- FeaturesSection bounds (3-6 items) ---
-
-def _feature_item(i):
-    return FeatureItem(icon="star", title=f"Feature {i}", description="desc")
-
-
-def test_features_section_rejects_fewer_than_3_items():
-    with pytest.raises(ValidationError):
-        FeaturesSection(type="features", items=[_feature_item(1), _feature_item(2)])
-
-
-def test_features_section_rejects_more_than_6_items():
-    with pytest.raises(ValidationError):
-        FeaturesSection(type="features", items=[_feature_item(i) for i in range(7)])
-
-
-def test_features_section_accepts_3_to_6_items():
-    section = FeaturesSection(type="features", items=[_feature_item(i) for i in range(4)])
-    assert len(section.items) == 4
-
-
-# --- Other section variants construct cleanly ---
-
-def test_testimonials_section():
-    section = TestimonialsSection(
-        type="testimonials",
-        items=[Testimonial(quote="Great!", author_name="Jane", author_role="CEO")]
-    )
-    assert section.type == "testimonials"
-
-
-def test_pricing_section():
-    section = PricingSection(
-        type="pricing",
-        plans=[PricingPlan(name="Pro", price="$10", features=["A", "B"], cta_text="Buy")]
-    )
-    assert section.type == "pricing"
-
-
-def test_faq_section():
-    section = FAQSection(type="faq", items=[FAQItem(question="Q?", answer="A.")])
-    assert section.type == "faq"
-
-
-def test_cta_section():
-    section = CTASection(type="cta", headline="Ready?", button_text="Go")
-    assert section.type == "cta"
-
-
-def test_footer_section_with_links():
-    section = FooterSection(
-        type="footer",
-        business_name="Acme",
-        links=[FooterLink(label="Privacy", url="https://acme.com/privacy")],
-        social_links=[SocialLink(platform="twitter", url="https://twitter.com/acme")],
-    )
-    assert section.type == "footer"
-
-
-# --- LandingBuildResult / LandingPromoteResult ---
-
 def test_build_result_allows_composition_without_preview_url():
-    composition = PageComposition(theme=_theme(), sections=[_hero(), _footer()])
     result = LandingBuildResult(
-        brief=_brief(), composition=composition, preview_url=None,
+        brief=_brief(), composition=_composition(), preview_url=None,
         status="failed", errors=["build failed"],
     )
     assert result.preview_url is None
     assert result.composition is not None
+    assert result.composition["sections"][0]["type"] == "hero"
+
+
+def test_build_result_allows_composition_none():
+    result = LandingBuildResult(
+        brief=_brief(), composition=None, preview_url=None,
+        status="failed", errors=["llm failed"],
+    )
+    assert result.composition is None
 
 
 def test_promote_result_failed_has_no_version():

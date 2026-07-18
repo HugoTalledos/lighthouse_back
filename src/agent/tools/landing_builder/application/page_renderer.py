@@ -1,10 +1,10 @@
 from __future__ import annotations
+import json
 import os
-from ..domain.models import PageComposition
 
 
-def render(composition: PageComposition, project_dir: str) -> None:
+def render(composition: dict, project_dir: str) -> None:
     path = os.path.join(project_dir, "src", "data", "page.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
-        f.write(composition.model_dump_json())
+        json.dump(composition, f)

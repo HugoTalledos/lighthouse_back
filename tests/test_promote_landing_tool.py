@@ -1,20 +1,20 @@
 from __future__ import annotations
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-from src.agent.tools.landing_builder.domain.models import (
-    Theme, HeroSection, FooterSection, PageComposition, LandingPromoteResult,
-)
+from src.agent.tools.landing_builder.domain.models import LandingPromoteResult
 
 
 def _composition_dict():
-    composition = PageComposition(
-        theme=Theme(primary_color="#111", secondary_color="#eee", font_family="Inter"),
-        sections=[
-            HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start"),
-            FooterSection(type="footer", business_name="Acme", links=[], social_links=[]),
+    return {
+        "theme": {
+            "primary_color": "#111", "secondary_color": "#eee", "font_family": "Inter",
+            "logo_url": None, "logo_text": None, "logo_icon": None,
+        },
+        "sections": [
+            {"type": "hero", "headline": "Welcome", "subheadline": "Sub", "cta_text": "Start"},
+            {"type": "footer", "business_name": "Acme", "links": [], "social_links": []},
         ],
-    )
-    return composition.model_dump(mode="json")
+    }
 
 
 async def test_tool_returns_dict_with_status():
@@ -40,12 +40,21 @@ async def test_tool_returns_dict_with_status():
     assert result["storage_path"] == "landings/proj-1/20260710T000000Z/source.tar.gz"
 
 
-async def test_tool_raises_on_invalid_composition():
-    from src.agent.tools.landing_builder.promote_landing_tool import promote_landing_tool
-    with pytest.raises(Exception):
-        await promote_landing_tool.ainvoke(
-            {"project_id": "proj-1", "composition_dict": {"theme": {}, "sections": []}}
-        )
+async def test_tool_passes_composition_dict_through_to_service():
+    with patch(
+        "src.agent.tools.landing_builder.promote_landing_tool._build_promotion_service"
+    ) as mock_factory:
+        mock_service = MagicMock()
+        mock_service.promote = AsyncMock(return_value=LandingPromoteResult(
+            project_id="proj-1", version="v1", storage_path="path", status="success", errors=[],
+        ))
+        mock_factory.return_value = mock_service
+
+        from src.agent.tools.landing_builder.promote_landing_tool import promote_landing_tool
+        composition = _composition_dict()
+        await promote_landing_tool.ainvoke({"project_id": "proj-1", "composition_dict": composition})
+
+        mock_service.promote.assert_awaited_once_with("proj-1", composition)
 
 
 def test_build_promotion_service_raises_without_template_repo(monkeypatch):

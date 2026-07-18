@@ -1,9 +1,7 @@
 from __future__ import annotations
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
-from src.agent.tools.landing_builder.domain.models import (
-    LandingBrief, Theme, HeroSection, FooterSection, PageComposition, LandingBuildResult,
-)
+from src.agent.tools.landing_builder.domain.models import LandingBrief, LandingBuildResult
 
 
 def _valid_brief_dict():
@@ -17,13 +15,16 @@ def _valid_brief_dict():
 
 
 def _stub_result(brief):
-    composition = PageComposition(
-        theme=Theme(primary_color="#111", secondary_color="#eee", font_family="Inter"),
-        sections=[
-            HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start"),
-            FooterSection(type="footer", business_name="Acme", links=[], social_links=[]),
+    composition = {
+        "theme": {
+            "primary_color": "#111", "secondary_color": "#eee", "font_family": "Inter",
+            "logo_url": None, "logo_text": "Acme", "logo_icon": None,
+        },
+        "sections": [
+            {"type": "hero", "headline": "Welcome", "subheadline": "Sub", "cta_text": "Start"},
+            {"type": "footer", "business_name": "Acme", "links": [], "social_links": []},
         ],
-    )
+    }
     return LandingBuildResult(
         brief=brief, composition=composition, preview_url="https://preview.example.com",
         status="success", errors=[],

@@ -1,13 +1,37 @@
 from __future__ import annotations
+import json
 import os
 from src.shared.llm.domain.ports import LLMClientPort
-from src.agent.tools.landing_builder.domain.models import (
-    LandingBrief, Theme, HeroSection, FooterSection, PageComposition, LandingBuildResult,
-)
+from src.agent.tools.landing_builder.domain.models import LandingBrief, LandingBuildResult
 from src.agent.tools.landing_builder.domain.ports import (
     TemplateSourcePort, StaticBuilderPort, HostingPort, BuildResult, PreviewDeployment,
 )
 from src.agent.tools.landing_builder.application.landing_builder_service import LandingBuilderService
+
+_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["theme", "sections"],
+    "properties": {
+        "theme": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": [
+                "primary_color", "secondary_color", "font_family",
+                "logo_url", "logo_text", "logo_icon",
+            ],
+            "properties": {
+                "primary_color": {"type": "string"},
+                "secondary_color": {"type": "string"},
+                "font_family": {"type": "string"},
+                "logo_url": {"type": ["string", "null"]},
+                "logo_text": {"type": ["string", "null"]},
+                "logo_icon": {"type": ["string", "null"]},
+            },
+        },
+        "sections": {"type": "array", "items": {"type": "object"}},
+    },
+}
 
 
 def _brief(**overrides):
@@ -22,13 +46,25 @@ def _brief(**overrides):
 
 
 def _composition():
-    return PageComposition(
-        theme=Theme(primary_color="#111", secondary_color="#eee", font_family="Inter"),
-        sections=[
-            HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start"),
-            FooterSection(type="footer", business_name="Acme", links=[], social_links=[]),
+    return {
+        "theme": {
+            "primary_color": "#111", "secondary_color": "#eee", "font_family": "Inter",
+            "logo_url": None, "logo_text": None, "logo_icon": None,
+        },
+        "sections": [
+            {"type": "hero", "headline": "Welcome", "subheadline": "Sub", "cta_text": "Start"},
+            {"type": "footer", "business_name": "Acme", "links": [], "social_links": []},
         ],
-    )
+    }
+
+
+def _write_agent_dir(project_dir):
+    agent_dir = os.path.join(project_dir, ".agent")
+    os.makedirs(agent_dir, exist_ok=True)
+    with open(os.path.join(agent_dir, "PAGE_JSON.md"), "w") as f:
+        f.write("# page.json Reference\n\nSee schema.")
+    with open(os.path.join(agent_dir, "page.schema.json"), "w") as f:
+        json.dump(_SCHEMA, f)
 
 
 class FakeLLMClient(LLMClientPort):
@@ -40,6 +76,9 @@ class FakeLLMClient(LLMClientPort):
         raise NotImplementedError
 
     async def generate_structured(self, prompt, response_type, *, system=None, temperature=0.4):
+        raise NotImplementedError
+
+    async def generate_structured_from_schema(self, prompt, schema, *, system=None, temperature=0.4):
         if self._raise:
             raise self._raise
         return self._return
@@ -55,6 +94,7 @@ class FakeTemplateSource(TemplateSourcePort):
         self.fetch_calls.append((repo, ref))
         if self._raise:
             raise self._raise
+        _write_agent_dir(self._project_dir)
         return self._project_dir
 
 
@@ -107,6 +147,11 @@ async def test_success_path_returns_preview_url(tmp_path):
     assert result.errors == []
 
 
+async def test_success_path_sets_logo_text_to_business_name(tmp_path):
+    result = await _service(tmp_path).build(_brief(business_name="Acme Coffee"))
+    assert result.composition["theme"]["logo_text"] == "Acme Coffee"
+
+
 async def test_success_path_renders_page_json_before_build(tmp_path):
     builder = FakeBuilder(BuildResult(success=True, dist_dir=str(tmp_path / "dist"), logs="ok"))
     await _service(tmp_path, builder=builder).build(_brief())
@@ -119,6 +164,13 @@ async def test_llm_failure_returns_failed_with_no_composition(tmp_path):
     assert result.status == "failed"
     assert result.composition is None
     assert "LLM down" in result.errors[0]
+
+
+async def test_llm_response_violating_schema_returns_failed(tmp_path):
+    invalid_composition = {"theme": {"primary_color": "#111"}, "sections": []}
+    service = _service(tmp_path, llm=FakeLLMClient(return_value=invalid_composition))
+    result = await service.build(_brief())
+    assert result.status == "failed"
 
 
 async def test_build_failure_keeps_composition_and_reports_logs(tmp_path):

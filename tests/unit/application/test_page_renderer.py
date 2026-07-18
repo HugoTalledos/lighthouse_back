@@ -1,18 +1,20 @@
 from __future__ import annotations
-from src.agent.tools.landing_builder.domain.models import (
-    Theme, HeroSection, FooterSection, PageComposition,
-)
+import json
 from src.agent.tools.landing_builder.application.page_renderer import render
 
 
 def _composition():
-    return PageComposition(
-        theme=Theme(primary_color="#111111", secondary_color="#eeeeee", font_family="Inter"),
-        sections=[
-            HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start"),
-            FooterSection(type="footer", business_name="Acme", links=[], social_links=[]),
+    return {
+        "theme": {
+            "primary_color": "#111111", "secondary_color": "#eeeeee", "font_family": "Inter",
+            "logo_url": None, "logo_text": None, "logo_icon": None,
+        },
+        "sections": [
+            {"type": "hero", "headline": "Welcome", "subheadline": "Sub", "image_url": None,
+             "cta_text": "Start", "cta_url": None},
+            {"type": "footer", "business_name": "Acme", "links": [], "social_links": []},
         ],
-    )
+    }
 
 
 def test_render_writes_page_json(tmp_path):
@@ -23,9 +25,7 @@ def test_render_writes_page_json(tmp_path):
 def test_render_writes_valid_json_round_trip(tmp_path):
     composition = _composition()
     render(composition, str(tmp_path))
-    loaded = PageComposition.model_validate_json(
-        (tmp_path / "src" / "data" / "page.json").read_text()
-    )
+    loaded = json.loads((tmp_path / "src" / "data" / "page.json").read_text())
     assert loaded == composition
 
 
