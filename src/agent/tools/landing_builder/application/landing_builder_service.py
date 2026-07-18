@@ -38,8 +38,9 @@ class LandingBuilderService:
             system, user = build_landing_prompt(brief, page_json_doc)
             print("=== [DEBUG] JSON de entrada (brief) ===")
             print(json.dumps(brief.model_dump(mode="json"), indent=2, ensure_ascii=False))
-            composition = await self._llm.generate_structured_from_schema(user, schema, system=system)
-            jsonschema.validate(instance=composition, schema=schema)
+            raw_composition = await self._llm.generate_structured_from_schema(user, schema, system=system)
+            jsonschema.validate(instance=raw_composition, schema=schema)
+            composition = raw_composition
             composition["theme"]["logo_text"] = brief.business_name
             print("=== [DEBUG] JSON decidido por el modelo (composition) ===")
             print(json.dumps(composition, indent=2, ensure_ascii=False))
