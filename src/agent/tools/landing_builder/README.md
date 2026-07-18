@@ -2,7 +2,7 @@
 
 Pair of LangGraph tools that generate a static Astro landing page from a business brief, deploy it to a Firebase Hosting preview channel so the frontend can show a live preview, and — only once the user approves that preview — persist the approved version's source as a versioned snapshot in Firebase Storage.
 
-The LLM never writes HTML/CSS/JS: it composes the page as a structured sequence of sections chosen from a fixed library (`hero`, `features`, `testimonials`, `pricing`, `faq`, `cta`, `footer`) defined by an Astro template hosted in a separate, public GitHub repo.
+The LLM never writes HTML/CSS/JS: it composes the page as a structured sequence of sections chosen from a fixed library (`hero`, `features`, `capture`, `testimonials`, `pricing`, `faq`, `cta`, `footer`) defined by an Astro template hosted in a separate, public GitHub repo. That library isn't hardcoded here — it's fetched at build time from the template's `.agent/page.schema.json` (structured-output schema) and `.agent/PAGE_JSON.md` (prompt guidance), so a template-side schema change never requires a `lighthouse_back` code change.
 
 v1 scope is initial generation only — no follow-up editing of an already-generated landing.
 
@@ -83,14 +83,14 @@ print(promote_result["storage_path"]) # e.g. "landings/acme-launch-001/20260710T
 ```
 src/agent/tools/landing_builder/
 ├── domain/
-│   ├── models.py               # LandingBrief, Theme, 7 Section variants (discriminated union),
-│   │                            # PageComposition, LandingBuildResult, LandingPromoteResult
+│   ├── models.py               # LandingBrief, LandingBuildResult (composition: dict), LandingPromoteResult
 │   ├── ports.py                # TemplateSourcePort, StaticBuilderPort, HostingPort, LandingStoragePort
-│   └── prompt_builder.py       # build_landing_prompt(brief) -> (system, user)
+│   └── prompt_builder.py       # build_landing_prompt(brief, page_json_doc) -> (system, user)
 ├── application/
-│   ├── page_renderer.py               # render(composition, project_dir) — deterministic, no LLM
+│   ├── agent_docs.py                  # read_page_json_doc/read_page_schema from the fetched template's .agent/
+│   ├── page_renderer.py               # render(composition: dict, project_dir) — deterministic, no LLM
 │   ├── landing_builder_service.py     # build(brief) -> LandingBuildResult
-│   └── landing_promotion_service.py   # promote(project_id, composition) -> LandingPromoteResult
+│   └── landing_promotion_service.py   # promote(project_id, composition: dict) -> LandingPromoteResult
 ├── infrastructure/
 │   ├── github_template_fetcher.py     # GithubTemplateFetcher (TemplateSourcePort)
 │   ├── astro_builder.py               # AstroNodeBuilder (StaticBuilderPort)
@@ -105,7 +105,8 @@ Pipeline:
 ```
 landing_builder_tool(brief)
   fetch template (GitHub, public, ephemeral temp dir)
-    → LLM generate_structured → PageComposition
+    → read .agent/PAGE_JSON.md + .agent/page.schema.json from the fetched template
+    → LLM generate_structured_from_schema → dict, validated against page.schema.json
     → render composition into template (src/data/page.json)
     → astro build (subprocess)
     → deploy dist/ to Firebase Hosting preview channel (channel_id = project_id)
