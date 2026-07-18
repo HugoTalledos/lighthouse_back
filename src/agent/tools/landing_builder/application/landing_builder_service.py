@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 import shutil
 
 from src.shared.llm.domain.ports import LLMClientPort
@@ -31,7 +32,12 @@ class LandingBuilderService:
         try:
             project_dir = await self._template_source.fetch(self._template_repo, self._template_ref)
             system, user = build_landing_prompt(brief)
+            print("=== [DEBUG] JSON de entrada (brief) ===")
+            print(json.dumps(brief.model_dump(mode="json"), indent=2, ensure_ascii=False))
             composition = await self._llm.generate_structured(user, PageComposition, system=system)
+            composition.theme.logo_text = brief.business_name
+            print("=== [DEBUG] JSON decidido por el modelo (composition) ===")
+            print(json.dumps(composition.model_dump(mode="json"), indent=2, ensure_ascii=False))
             render(composition, project_dir)
 
             build_result = await self._builder.build(project_dir)

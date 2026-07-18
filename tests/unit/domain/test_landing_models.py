@@ -25,11 +25,11 @@ def _theme():
 
 
 def _hero():
-    return HeroSection(headline="Welcome", subheadline="Sub", cta_text="Start")
+    return HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start")
 
 
 def _footer():
-    return FooterSection(business_name="Acme", links=[], social_links=[])
+    return FooterSection(type="footer", business_name="Acme", links=[], social_links=[])
 
 
 # --- LandingBrief ---
@@ -50,7 +50,12 @@ def test_brief_requires_business_name():
 
 # --- Section discriminated union ---
 
-def test_hero_section_default_type():
+def test_hero_section_type_is_required():
+    with pytest.raises(ValidationError):
+        HeroSection(headline="Welcome", subheadline="Sub", cta_text="Start")
+
+
+def test_hero_section_type():
     assert _hero().type == "hero"
 
 
@@ -90,16 +95,16 @@ def _feature_item(i):
 
 def test_features_section_rejects_fewer_than_3_items():
     with pytest.raises(ValidationError):
-        FeaturesSection(items=[_feature_item(1), _feature_item(2)])
+        FeaturesSection(type="features", items=[_feature_item(1), _feature_item(2)])
 
 
 def test_features_section_rejects_more_than_6_items():
     with pytest.raises(ValidationError):
-        FeaturesSection(items=[_feature_item(i) for i in range(7)])
+        FeaturesSection(type="features", items=[_feature_item(i) for i in range(7)])
 
 
 def test_features_section_accepts_3_to_6_items():
-    section = FeaturesSection(items=[_feature_item(i) for i in range(4)])
+    section = FeaturesSection(type="features", items=[_feature_item(i) for i in range(4)])
     assert len(section.items) == 4
 
 
@@ -107,6 +112,7 @@ def test_features_section_accepts_3_to_6_items():
 
 def test_testimonials_section():
     section = TestimonialsSection(
+        type="testimonials",
         items=[Testimonial(quote="Great!", author_name="Jane", author_role="CEO")]
     )
     assert section.type == "testimonials"
@@ -114,23 +120,25 @@ def test_testimonials_section():
 
 def test_pricing_section():
     section = PricingSection(
+        type="pricing",
         plans=[PricingPlan(name="Pro", price="$10", features=["A", "B"], cta_text="Buy")]
     )
     assert section.type == "pricing"
 
 
 def test_faq_section():
-    section = FAQSection(items=[FAQItem(question="Q?", answer="A.")])
+    section = FAQSection(type="faq", items=[FAQItem(question="Q?", answer="A.")])
     assert section.type == "faq"
 
 
 def test_cta_section():
-    section = CTASection(headline="Ready?", button_text="Go")
+    section = CTASection(type="cta", headline="Ready?", button_text="Go")
     assert section.type == "cta"
 
 
 def test_footer_section_with_links():
     section = FooterSection(
+        type="footer",
         business_name="Acme",
         links=[FooterLink(label="Privacy", url="https://acme.com/privacy")],
         social_links=[SocialLink(platform="twitter", url="https://twitter.com/acme")],

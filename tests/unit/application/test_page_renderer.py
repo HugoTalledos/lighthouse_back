@@ -9,8 +9,8 @@ def _composition():
     return PageComposition(
         theme=Theme(primary_color="#111111", secondary_color="#eeeeee", font_family="Inter"),
         sections=[
-            HeroSection(headline="Welcome", subheadline="Sub", cta_text="Start"),
-            FooterSection(business_name="Acme", links=[], social_links=[]),
+            HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start"),
+            FooterSection(type="footer", business_name="Acme", links=[], social_links=[]),
         ],
     )
 

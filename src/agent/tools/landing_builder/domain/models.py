@@ -19,6 +19,8 @@ class Theme(BaseModel):
     secondary_color: str
     font_family: str
     logo_url: str | None = None
+    logo_text: str | None = None
+    logo_icon: str | None = None
 
 
 class FeatureItem(BaseModel):
@@ -57,7 +59,7 @@ class SocialLink(BaseModel):
 
 
 class HeroSection(BaseModel):
-    type: Literal["hero"] = "hero"
+    type: Literal["hero"]
     headline: str
     subheadline: str
     image_url: str | None = None
@@ -66,28 +68,28 @@ class HeroSection(BaseModel):
 
 
 class FeaturesSection(BaseModel):
-    type: Literal["features"] = "features"
+    type: Literal["features"]
     headline: str | None = None
     items: list[FeatureItem] = Field(min_length=3, max_length=6)
 
 
 class TestimonialsSection(BaseModel):
-    type: Literal["testimonials"] = "testimonials"
+    type: Literal["testimonials"]
     items: list[Testimonial]
 
 
 class PricingSection(BaseModel):
-    type: Literal["pricing"] = "pricing"
+    type: Literal["pricing"]
     plans: list[PricingPlan]
 
 
 class FAQSection(BaseModel):
-    type: Literal["faq"] = "faq"
+    type: Literal["faq"]
     items: list[FAQItem]
 
 
 class CTASection(BaseModel):
-    type: Literal["cta"] = "cta"
+    type: Literal["cta"]
     headline: str
     subheadline: str | None = None
     button_text: str
@@ -95,7 +97,7 @@ class CTASection(BaseModel):
 
 
 class FooterSection(BaseModel):
-    type: Literal["footer"] = "footer"
+    type: Literal["footer"]
     business_name: str
     links: list[FooterLink]
     social_links: list[SocialLink]

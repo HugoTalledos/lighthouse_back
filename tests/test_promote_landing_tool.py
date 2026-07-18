@@ -10,8 +10,8 @@ def _composition_dict():
     composition = PageComposition(
         theme=Theme(primary_color="#111", secondary_color="#eee", font_family="Inter"),
         sections=[
-            HeroSection(headline="Welcome", subheadline="Sub", cta_text="Start"),
-            FooterSection(business_name="Acme", links=[], social_links=[]),
+            HeroSection(type="hero", headline="Welcome", subheadline="Sub", cta_text="Start"),
+            FooterSection(type="footer", business_name="Acme", links=[], social_links=[]),
         ],
     )
     return composition.model_dump(mode="json")
