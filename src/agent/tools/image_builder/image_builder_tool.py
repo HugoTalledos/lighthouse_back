@@ -7,6 +7,7 @@ from .application.image_builder_service import ImageBuilderService
 from .infrastructure.generators.dalle_generator import DalleImageGenerator
 from .infrastructure.generators.vertex_generator import VertexImageGenerator
 from .infrastructure.generators.ollama_generator import OllamaImageGenerator
+from .infrastructure.generators.openrouter_generator import OpenRouterImageGenerator
 from .infrastructure.composer.pillow_composer import PillowImageComposer
 from .infrastructure.storage.firebase_storage import FirebaseStorageAdapter
 
@@ -15,6 +16,7 @@ _GENERATORS = {
     "dalle3": DalleImageGenerator,
     "vertex": VertexImageGenerator,
     "ollama": OllamaImageGenerator,
+    "openrouter": OpenRouterImageGenerator,
 }
 
 

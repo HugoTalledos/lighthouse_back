@@ -5,11 +5,13 @@ from .domain.ports import LLMClientPort
 from .infrastructure.openai_client import OpenAIClient
 from .infrastructure.anthropic_client import AnthropicClient
 from .infrastructure.ollama_local_client import OllamaLocalClient
+from .infrastructure.openrouter_client import OpenRouterClient
 
 _CLIENTS = {
     "openai": OpenAIClient,
     "anthropic": AnthropicClient,
     "ollama": OllamaLocalClient,
+    "openrouter": OpenRouterClient,
 }
 
 
