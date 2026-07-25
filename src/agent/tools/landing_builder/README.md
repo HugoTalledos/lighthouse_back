@@ -12,7 +12,7 @@ v1 scope is initial generation only — no follow-up editing of an already-gener
 
 - Python 3.9+
 - Node.js/`npm`/`npx` available on `PATH` (used to `npm install && astro build` the template)
-- An OpenAI API key (or `LLM_PROVIDER=anthropic` once the stub is implemented)
+- An OpenRouter API key (or `LLM_PROVIDER=ollama` to run against a local Ollama server)
 - A public GitHub repo hosting the Astro template (`LANDING_TEMPLATE_REPO`)
 - A Firebase project with Hosting and Storage enabled
 
@@ -36,9 +36,11 @@ pip install -r requirements.txt
 | `FIREBASE_HOSTING_SITE_ID` | Yes | — | Firebase Hosting site id to deploy preview channels to |
 | `FIREBASE_STORAGE_BUCKET` | Yes | — | Reused for `landings/` snapshots |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | — | Firebase/Hosting auth (ADC if omitted) |
-| `LLM_PROVIDER` | No | `openai` | LLM backend: `openai` or `anthropic` (stub) |
-| `OPENAI_API_KEY` | Yes (when `LLM_PROVIDER=openai`) | — | OpenAI API key |
-| `OPENAI_MODEL` | No | `gpt-4o` | Chat model to use |
+| `LLM_PROVIDER` | No | `openrouter` | LLM backend: `openrouter` or `ollama` |
+| `OPENROUTER_API_KEY` | Yes (when `LLM_PROVIDER=openrouter`) | — | OpenRouter API key |
+| `OPENROUTER_MODEL` | No | `openai/gpt-4o` | Chat model to use, in OpenRouter `vendor/model` form |
+| `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server URL (when `LLM_PROVIDER=ollama`) |
+| `OLLAMA_MODEL` | No | `llama3.1` | Ollama model tag (when `LLM_PROVIDER=ollama`) |
 
 ---
 

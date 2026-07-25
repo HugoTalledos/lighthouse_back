@@ -7,7 +7,7 @@ LangGraph tool that generates a Facebook Marketing API campaign configuration (C
 ## Requirements
 
 - Python 3.9+
-- An OpenAI API key (or set `LLM_PROVIDER=anthropic` once the stub is implemented)
+- An OpenRouter API key (or set `LLM_PROVIDER=ollama` to run against a local Ollama server)
 
 ---
 
@@ -23,9 +23,11 @@ pip install -r requirements.txt
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `LLM_PROVIDER` | No | `openai` | LLM backend: `openai` or `anthropic` (stub) |
-| `OPENAI_API_KEY` | Yes (when `LLM_PROVIDER=openai`) | — | OpenAI API key |
-| `OPENAI_MODEL` | No | `gpt-4o` | Chat model to use |
+| `LLM_PROVIDER` | No | `openrouter` | LLM backend: `openrouter` or `ollama` |
+| `OPENROUTER_API_KEY` | Yes (when `LLM_PROVIDER=openrouter`) | — | OpenRouter API key |
+| `OPENROUTER_MODEL` | No | `openai/gpt-4o` | Chat model to use, in OpenRouter `vendor/model` form |
+| `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server URL (when `LLM_PROVIDER=ollama`) |
+| `OLLAMA_MODEL` | No | `llama3.1` | Ollama model tag (when `LLM_PROVIDER=ollama`) |
 
 ---
 
@@ -122,8 +124,8 @@ src/shared/llm/              # Provider-agnostic LLM kernel
 │   ├── models.py            # LLMMessage, Role, LLMResponse
 │   └── ports.py             # LLMClientPort ABC
 ├── infrastructure/
-│   ├── openai_client.py     # OpenAI chat/completions via httpx (no SDK)
-│   └── anthropic_client.py  # Stub (NotImplementedError)
+│   ├── openrouter_client.py    # OpenRouter chat/completions via httpx (no SDK)
+│   └── ollama_local_client.py  # Local Ollama server via httpx
 └── factory.py               # build_llm_client() → LLMClientPort via LLM_PROVIDER
 ```
 

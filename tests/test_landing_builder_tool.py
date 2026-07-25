@@ -66,7 +66,7 @@ def test_build_service_wires_dependencies(monkeypatch):
     monkeypatch.setenv("LANDING_TEMPLATE_REPO", "acme/landing-template")
     monkeypatch.setenv("LANDING_TEMPLATE_REF", "v2")
     monkeypatch.setenv("FIREBASE_HOSTING_SITE_ID", "my-site")
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
 
     from src.agent.tools.landing_builder.landing_builder_tool import _build_service
     from src.agent.tools.landing_builder.infrastructure.github_template_fetcher import (
