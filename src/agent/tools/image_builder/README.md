@@ -152,7 +152,7 @@ The tool uses Domain-Driven Design: the domain layer has zero framework dependen
 python3 -m pytest -v
 ```
 
-Expected: 154 tests, all passing.
+Expected: the full suite green.
 
 ---
 

@@ -39,7 +39,7 @@ There are two independent provider axes: `LLM_PROVIDER` (text/JSON generation) a
 
 ## Architecture
 
-The only current feature is `image_builder_tool`, a LangGraph tool that generates Facebook/Instagram ad creatives from a business brief. The pipeline is: generate image → compose text overlay → upload to Firebase Storage.
+`src/agent/tools/` currently holds four LangGraph tools: `campaign_builder_tool` (generates a Facebook Marketing API campaign config from a business brief), `landing_builder_tool` (generates and previews a landing page), `promote_landing_tool` (persists an approved landing to permanent storage), and `image_builder_tool`, which generates Facebook/Instagram ad creatives from a business brief. The rest of this section documents `image_builder_tool`'s pipeline: generate image → compose text overlay → upload to Firebase Storage.
 
 The code follows **Domain-Driven Design** with a strict layering rule: inner layers have zero dependencies on outer layers.
 
