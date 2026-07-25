@@ -6,6 +6,7 @@ import httpx
 from pydantic import BaseModel
 
 from ..domain.ports import LLMClientPort
+from src.shared.openrouter.credentials import OpenRouterCredentials
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -15,24 +16,8 @@ _TIMEOUT = 60.0
 
 class OpenRouterClient(LLMClientPort):
     def __init__(self) -> None:
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if not api_key:
-            raise ValueError("OPENROUTER_API_KEY environment variable is not set")
-        self._api_key = api_key
+        self._credentials = OpenRouterCredentials()
         self._model = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
-
-    def _headers(self) -> dict:
-        headers = {
-            "Authorization": f"Bearer {self._api_key}",
-            "Content-Type": "application/json",
-        }
-        referer = os.getenv("OPENROUTER_HTTP_REFERER")
-        if referer:
-            headers["HTTP-Referer"] = referer
-        title = os.getenv("OPENROUTER_X_TITLE")
-        if title:
-            headers["X-Title"] = title
-        return headers
 
     async def complete(
         self,
@@ -49,7 +34,7 @@ class OpenRouterClient(LLMClientPort):
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             response = await client.post(
                 _CHAT_URL,
-                headers=self._headers(),
+                headers=self._credentials.headers(),
                 json={
                     "model": self._model,
                     "messages": messages,
@@ -79,7 +64,7 @@ class OpenRouterClient(LLMClientPort):
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             response = await client.post(
                 _CHAT_URL,
-                headers=self._headers(),
+                headers=self._credentials.headers(),
                 json={
                     "model": self._model,
                     "messages": messages,
@@ -118,7 +103,7 @@ class OpenRouterClient(LLMClientPort):
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             response = await client.post(
                 _CHAT_URL,
-                headers=self._headers(),
+                headers=self._credentials.headers(),
                 json={
                     "model": self._model,
                     "messages": messages,
