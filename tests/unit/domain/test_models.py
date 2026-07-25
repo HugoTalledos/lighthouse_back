@@ -64,3 +64,10 @@ def test_result_model_dump_is_serializable():
     assert dumped["status"] == "success"
     assert dumped["creatives"][0]["provider"] == "openrouter"
     assert isinstance(dumped["brief"]["style_hints"], list)
+
+
+def test_generated_image_is_the_shared_model():
+    from src.agent.tools.image_builder.domain import models as image_builder_models
+    from src.shared.image_gen.domain.models import GeneratedImage as SharedGeneratedImage
+
+    assert image_builder_models.GeneratedImage is SharedGeneratedImage

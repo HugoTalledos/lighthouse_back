@@ -1,31 +1,19 @@
 from __future__ import annotations
-import os
 from langchain_core.tools import tool
 
+from src.shared.image_gen.factory import build_image_generator
 from .domain.models import ImageBrief
 from .application.image_builder_service import ImageBuilderService
-from .infrastructure.generators.ollama_generator import OllamaImageGenerator
-from .infrastructure.generators.openrouter_generator import OpenRouterImageGenerator
 from .infrastructure.composer.pillow_composer import PillowImageComposer
 from .infrastructure.storage.firebase_storage import FirebaseStorageAdapter
 
 
-_GENERATORS = {
-    "openrouter": OpenRouterImageGenerator,
-    "ollama": OllamaImageGenerator,
-}
-
-
 def _build_service() -> ImageBuilderService:
-    provider = os.getenv("IMAGE_PROVIDER", "openrouter")
-    generator_class = _GENERATORS.get(provider)
-    if generator_class is None:
-        valid = ", ".join(_GENERATORS)
-        raise ValueError(f"Unknown IMAGE_PROVIDER: {provider!r}. Valid values: {valid}")
-    generator = generator_class()
-    composer = PillowImageComposer()
-    storage = FirebaseStorageAdapter()
-    return ImageBuilderService(generator, composer, storage)
+    return ImageBuilderService(
+        build_image_generator(),
+        PillowImageComposer(),
+        FirebaseStorageAdapter(),
+    )
 
 
 @tool

@@ -4,9 +4,7 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from src.agent.tools.image_builder.infrastructure.generators.ollama_generator import (
-    OllamaImageGenerator,
-)
+from src.shared.image_gen.infrastructure.ollama_generator import OllamaImageGenerator
 
 FAKE_PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 100  # minimal fake PNG bytes
 FAKE_PNG_B64 = base64.b64encode(FAKE_PNG).decode()

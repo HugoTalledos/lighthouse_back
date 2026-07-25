@@ -4,7 +4,8 @@ import re
 from datetime import datetime
 
 from ..domain.models import ImageBrief, ComposedCreative, ImageBuildResult
-from ..domain.ports import ImageGeneratorPort, ImageComposerPort, ImageStoragePort
+from src.shared.image_gen.domain.ports import ImageGeneratorPort
+from ..domain.ports import ImageComposerPort, ImageStoragePort
 from ..domain.prompt_builder import PromptBuilder
 
 

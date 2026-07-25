@@ -2,9 +2,8 @@ import pytest
 from src.agent.tools.image_builder.domain.models import (
     ImageBrief, GeneratedImage, ComposedCreative, ImageBuildResult,
 )
-from src.agent.tools.image_builder.domain.ports import (
-    ImageGeneratorPort, ImageComposerPort, ImageStoragePort,
-)
+from src.shared.image_gen.domain.ports import ImageGeneratorPort
+from src.agent.tools.image_builder.domain.ports import ImageComposerPort, ImageStoragePort
 from src.agent.tools.image_builder.application.image_builder_service import ImageBuilderService
 
 

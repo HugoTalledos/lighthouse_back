@@ -3,8 +3,9 @@ import base64
 import os
 import httpx
 
-from ...domain.models import GeneratedImage
-from ...domain.ports import ImageGeneratorPort
+from src.shared.openrouter.credentials import OpenRouterCredentials
+from ..domain.models import GeneratedImage
+from ..domain.ports import ImageGeneratorPort
 
 _CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
 _TIMEOUT = 180.0
@@ -23,24 +24,8 @@ class OpenRouterImageGenerator(ImageGeneratorPort):
     """
 
     def __init__(self) -> None:
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        if not api_key:
-            raise ValueError("OPENROUTER_API_KEY environment variable is not set")
-        self._api_key = api_key
+        self._credentials = OpenRouterCredentials()
         self._model = os.getenv("OPENROUTER_IMAGE_MODEL", "google/gemini-2.5-flash-image-preview")
-
-    def _headers(self) -> dict:
-        headers = {
-            "Authorization": f"Bearer {self._api_key}",
-            "Content-Type": "application/json",
-        }
-        referer = os.getenv("OPENROUTER_HTTP_REFERER")
-        if referer:
-            headers["HTTP-Referer"] = referer
-        title = os.getenv("OPENROUTER_X_TITLE")
-        if title:
-            headers["X-Title"] = title
-        return headers
 
     async def generate(self, prompt: str, width: int, height: int) -> GeneratedImage:
         sized_prompt = f"{prompt}\n\nTarget image dimensions: {width}x{height} pixels."
@@ -48,7 +33,7 @@ class OpenRouterImageGenerator(ImageGeneratorPort):
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             response = await client.post(
                 _CHAT_URL,
-                headers=self._headers(),
+                headers=self._credentials.headers(),
                 json={
                     "model": self._model,
                     "messages": [{"role": "user", "content": sized_prompt}],

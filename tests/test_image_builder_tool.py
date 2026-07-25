@@ -69,7 +69,7 @@ def test_build_service_selects_openrouter_by_default(monkeypatch):
     with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
         from src.agent.tools.image_builder.image_builder_tool import _build_service
-        from src.agent.tools.image_builder.infrastructure.generators.openrouter_generator import (
+        from src.shared.image_gen.infrastructure.openrouter_generator import (
             OpenRouterImageGenerator,
         )
         service = _build_service()
@@ -83,7 +83,7 @@ def test_build_service_selects_ollama(monkeypatch):
     with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
         from src.agent.tools.image_builder.image_builder_tool import _build_service
-        from src.agent.tools.image_builder.infrastructure.generators.ollama_generator import (
+        from src.shared.image_gen.infrastructure.ollama_generator import (
             OllamaImageGenerator,
         )
         service = _build_service()

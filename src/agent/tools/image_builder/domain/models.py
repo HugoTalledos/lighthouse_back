@@ -2,6 +2,10 @@ from __future__ import annotations
 from typing import Literal, Optional
 from pydantic import BaseModel, field_validator
 
+from src.shared.image_gen.domain.models import GeneratedImage
+
+__all__ = ["GeneratedImage", "ImageBrief", "ComposedCreative", "ImageBuildResult"]
+
 
 class ImageBrief(BaseModel):
     project_id: str
@@ -26,14 +30,6 @@ class ImageBrief(BaseModel):
         if len(v) > 20:
             raise ValueError("cta_text must be ≤ 20 characters")
         return v
-
-
-class GeneratedImage(BaseModel):
-    provider: str
-    image_bytes: bytes
-    prompt_used: str
-    width: int
-    height: int
 
 
 class ComposedCreative(BaseModel):
