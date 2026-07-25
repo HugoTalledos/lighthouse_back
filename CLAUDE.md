@@ -77,6 +77,7 @@ Tests are under `tests/` and mirror the `src/` structure:
 - `tests/test_image_builder_tool.py` — integration-style tests for the `@tool` entry point (mocks `_build_service`)
 - `tests/unit/domain/` — pure domain logic tests (no mocks needed)
 - `tests/unit/application/` — service orchestration tests (mocks ports)
-- `tests/unit/infrastructure/` — adapter tests (uses `pytest-httpx` to mock provider HTTP calls)
+- `tests/unit/infrastructure/` — adapter tests for image_builder's composer and storage, plus other tools' infrastructure adapters
+- `tests/unit/shared/` — shared LLM and image-generation modules: factory dispatch tests plus provider adapter tests (uses `pytest-httpx` to mock HTTP calls)
 
 `pytest.ini` sets `asyncio_mode = auto`, so `async def test_*` functions work without decorators.
