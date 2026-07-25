@@ -1,6 +1,6 @@
 # Lighthouse Back — image_builder Tool
 
-LangGraph tool that generates Facebook/Instagram ad creatives from a business brief. Calls DALL-E 3, overlays headline + CTA text with Pillow, and uploads the result to Firebase Storage.
+LangGraph tool that generates Facebook/Instagram ad creatives from a business brief. Calls an image model through OpenRouter (or a local Ollama server), overlays headline + CTA text with Pillow, and uploads the result to Firebase Storage.
 
 ---
 
@@ -8,7 +8,7 @@ LangGraph tool that generates Facebook/Instagram ad creatives from a business br
 
 - Python 3.9+
 - A Firebase project with a Storage bucket
-- An OpenAI API key with DALL-E 3 access
+- An OpenRouter API key (or a local Ollama server with an image model pulled)
 
 ---
 
@@ -26,10 +26,15 @@ Set the following environment variables before running:
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes (when `IMAGE_PROVIDER=dalle3`) | OpenAI API key with DALL-E 3 access |
+| `OPENROUTER_API_KEY` | Yes (when `IMAGE_PROVIDER=openrouter`) | OpenRouter API key |
 | `FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket name, e.g. `my-project.appspot.com` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | Path to Firebase service account JSON. If omitted, Application Default Credentials are used |
-| `IMAGE_PROVIDER` | No | Image generation backend: `dalle3` (default) or `vertex` |
+| `IMAGE_PROVIDER` | No | Image generation backend: `openrouter` (default) or `ollama` |
+| `OPENROUTER_IMAGE_MODEL` | No | Image-capable model; defaults to `google/gemini-2.5-flash-image-preview` |
+| `OLLAMA_BASE_URL` | No | Ollama server URL; defaults to `http://localhost:11434` |
+| `OLLAMA_IMAGE_MODEL` | No | Ollama image model tag; defaults to `x/flux2-klein:4b` |
+
+> **Note on resolution:** OpenRouter has no dedicated images endpoint — image models are called through `/chat/completions` and accept no width/height, so the target size is only a hint inside the prompt and the composer center-crops the result. Ollama does accept `width`/`height` directly.
 
 ### Firebase authentication
 
@@ -70,7 +75,7 @@ print(result["errors"])          # list of per-image error messages (if any)
 for creative in result["creatives"]:
     print(creative["storage_url"])   # public Firebase URL, ready for Meta Ads
     print(creative["headline"])
-    print(creative["provider"])      # "dalle3"
+    print(creative["provider"])      # "openrouter"
 ```
 
 ### Wiring into a LangGraph agent
@@ -99,7 +104,7 @@ agent = create_react_agent(model, tools=[image_builder_tool])
       "headline": "Reclaim your week",
       "cta_text": "Start free trial",
       "prompt_used": "A 1200x628 Facebook ad background image...",
-      "provider": "dalle3",
+      "provider": "openrouter",
       "image_bytes": "<base64-encoded PNG>"
     }
   ],
@@ -117,18 +122,21 @@ creatives/{project_id}/{business_name_slug}_{variant_index}_{timestamp}.png
 ## Architecture
 
 ```
-src/agent/image_builder/
+src/agent/tools/image_builder/
 ├── domain/
 │   ├── models.py            # Pydantic v2 value objects (ImageBrief, ImageBuildResult, …)
 │   ├── ports.py             # Abstract ports (ImageGeneratorPort, ImageComposerPort, ImageStoragePort)
-│   └── prompt_builder.py   # Builds DALL-E prompts with per-variant mood variation
+│   └── prompt_builder.py    # Builds image prompts with per-variant mood variation
 ├── application/
 │   └── image_builder_service.py  # Orchestrates: generate → compose → upload
 ├── infrastructure/
-│   ├── dalle_generator.py   # DALL-E 3 via httpx (no openai SDK)
-│   ├── vertex_generator.py  # Vertex AI Imagen stub (NotImplementedError)
-│   ├── pillow_composer.py   # Pillow: 1200×628 crop + text bar + CTA pill
-│   └── firebase_storage.py  # Firebase Storage upload (non-blocking via asyncio.to_thread)
+│   ├── generators/
+│   │   ├── openrouter_generator.py  # Image models via OpenRouter /chat/completions
+│   │   └── ollama_generator.py      # Local Ollama server via /api/generate
+│   ├── composer/
+│   │   └── pillow_composer.py       # Pillow: 1200×628 crop + text bar + CTA pill
+│   └── storage/
+│       └── firebase_storage.py      # Firebase Storage upload (non-blocking via asyncio.to_thread)
 └── image_builder_tool.py    # @tool entry point + _build_service() factory
 ```
 

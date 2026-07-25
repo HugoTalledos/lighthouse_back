@@ -23,7 +23,7 @@ def _brief(n_images=2):
 
 def _fake_image(i=0):
     return GeneratedImage(
-        provider="dalle3",
+        provider="openrouter",
         image_bytes=b"fake-image-bytes",
         prompt_used=f"prompt {i}",
         width=1792,
@@ -103,7 +103,7 @@ async def test_creative_fields_populated():
     assert creative.variant_index == 0
     assert creative.headline == brief.headline
     assert creative.cta_text == brief.cta_text
-    assert creative.provider == "dalle3"
+    assert creative.provider == "openrouter"
     assert creative.storage_url.startswith("https://")
 
 

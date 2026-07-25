@@ -30,13 +30,13 @@ def _stub_result(brief):
         headline=brief.headline,
         cta_text=brief.cta_text,
         prompt_used="prompt",
-        provider="dalle3",
+        provider="openrouter",
     )
     return ImageBuildResult(brief=brief, creatives=[creative], status="success", errors=[])
 
 
 async def test_tool_returns_dict_with_status(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "dalle3")
+    monkeypatch.setenv("IMAGE_PROVIDER", "openrouter")
 
     brief = ImageBrief.model_validate(_valid_brief_dict())
     stub_result = _stub_result(brief)
@@ -61,26 +61,40 @@ async def test_tool_raises_on_invalid_brief():
         await image_builder_tool.ainvoke({"brief_dict": {"business_name": "Only this"}})
 
 
-def test_build_service_selects_dalle_by_default(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "dalle3")
-    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+def test_build_service_selects_openrouter_by_default(monkeypatch):
+    monkeypatch.delenv("IMAGE_PROVIDER", raising=False)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
     monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
 
     with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
         from src.agent.tools.image_builder.image_builder_tool import _build_service
-        from src.agent.tools.image_builder.infrastructure.generators.dalle_generator import DalleImageGenerator
+        from src.agent.tools.image_builder.infrastructure.generators.openrouter_generator import (
+            OpenRouterImageGenerator,
+        )
         service = _build_service()
-        assert isinstance(service._generator, DalleImageGenerator)
+        assert isinstance(service._generator, OpenRouterImageGenerator)
 
 
-def test_build_service_selects_vertex(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "vertex")
+def test_build_service_selects_ollama(monkeypatch):
+    monkeypatch.setenv("IMAGE_PROVIDER", "ollama")
     monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
 
     with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
         from src.agent.tools.image_builder.image_builder_tool import _build_service
-        from src.agent.tools.image_builder.infrastructure.generators.vertex_generator import VertexImageGenerator
+        from src.agent.tools.image_builder.infrastructure.generators.ollama_generator import (
+            OllamaImageGenerator,
+        )
         service = _build_service()
-        assert isinstance(service._generator, VertexImageGenerator)
+        assert isinstance(service._generator, OllamaImageGenerator)
+
+
+@pytest.mark.parametrize("provider", ["dalle3", "vertex"])
+def test_build_service_rejects_removed_providers(monkeypatch, provider):
+    monkeypatch.setenv("IMAGE_PROVIDER", provider)
+    monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
+
+    from src.agent.tools.image_builder.image_builder_tool import _build_service
+    with pytest.raises(ValueError, match="Unknown IMAGE_PROVIDER"):
+        _build_service()

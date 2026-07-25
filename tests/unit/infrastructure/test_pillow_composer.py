@@ -28,7 +28,7 @@ def _brief():
 
 def _fake_image(png_bytes: bytes) -> GeneratedImage:
     return GeneratedImage(
-        provider="dalle3",
+        provider="openrouter",
         image_bytes=png_bytes,
         prompt_used="prompt",
         width=1792,

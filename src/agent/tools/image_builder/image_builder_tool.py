@@ -4,8 +4,6 @@ from langchain_core.tools import tool
 
 from .domain.models import ImageBrief
 from .application.image_builder_service import ImageBuilderService
-from .infrastructure.generators.dalle_generator import DalleImageGenerator
-from .infrastructure.generators.vertex_generator import VertexImageGenerator
 from .infrastructure.generators.ollama_generator import OllamaImageGenerator
 from .infrastructure.generators.openrouter_generator import OpenRouterImageGenerator
 from .infrastructure.composer.pillow_composer import PillowImageComposer
@@ -13,15 +11,13 @@ from .infrastructure.storage.firebase_storage import FirebaseStorageAdapter
 
 
 _GENERATORS = {
-    "dalle3": DalleImageGenerator,
-    "vertex": VertexImageGenerator,
-    "ollama": OllamaImageGenerator,
     "openrouter": OpenRouterImageGenerator,
+    "ollama": OllamaImageGenerator,
 }
 
 
 def _build_service() -> ImageBuilderService:
-    provider = os.getenv("IMAGE_PROVIDER", "dalle3")
+    provider = os.getenv("IMAGE_PROVIDER", "openrouter")
     generator_class = _GENERATORS.get(provider)
     if generator_class is None:
         valid = ", ".join(_GENERATORS)

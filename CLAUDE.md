@@ -22,12 +22,20 @@ python3 -m pytest -v -k "test_tool_returns_dict_with_status"
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes (when `IMAGE_PROVIDER=dalle3`) | OpenAI API key with DALL-E 3 access |
+There are two independent provider axes: `LLM_PROVIDER` (text/JSON generation) and `IMAGE_PROVIDER` (image generation). Both accept only `openrouter` (default) or `ollama`.
+
+| Variable | Required | Description |
+|---|---|---|
+| `OPENROUTER_API_KEY` | Yes (when either provider is `openrouter`) | OpenRouter API key; shared by the LLM client and the image generator |
+| `LLM_PROVIDER` | No | `openrouter` (default) or `ollama` |
+| `OPENROUTER_MODEL` | No | Chat model in `vendor/model` form; defaults to `openai/gpt-4o` |
+| `OLLAMA_MODEL` | No (when `LLM_PROVIDER=ollama`) | Ollama chat model tag; defaults to `llama3.1` |
+| `IMAGE_PROVIDER` | No | `openrouter` (default) or `ollama` |
+| `OPENROUTER_IMAGE_MODEL` | No | Image-capable model; defaults to `google/gemini-2.5-flash-image-preview` |
+| `OLLAMA_BASE_URL` | No (when either provider is `ollama`) | Ollama server URL; defaults to `http://localhost:11434` |
+| `OLLAMA_IMAGE_MODEL` | No (when `IMAGE_PROVIDER=ollama`) | Ollama image model tag; defaults to `x/flux2-klein:4b` |
 | `FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket name, e.g. `my-project.appspot.com` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | Path to Firebase service account JSON; omit to use Application Default Credentials |
-| `IMAGE_PROVIDER` | No | `dalle3` (default), `vertex`, or `ollama` |
-| `OLLAMA_BASE_URL` | No (when `IMAGE_PROVIDER=ollama`) | Ollama server URL; defaults to `http://localhost:11434` |
-| `OLLAMA_IMAGE_MODEL` | No (when `IMAGE_PROVIDER=ollama`) | Ollama image model tag; defaults to `x/flux2-klein:4b` |
 
 ## Architecture
 
@@ -40,14 +48,14 @@ src/agent/tools/image_builder/
 ├── domain/          # Pure Python — no framework imports
 │   ├── models.py          # Pydantic v2 value objects: ImageBrief, GeneratedImage, ComposedCreative, ImageBuildResult
 │   ├── ports.py           # Abstract base classes: ImageGeneratorPort, ImageComposerPort, ImageStoragePort
-│   └── prompt_builder.py  # Builds DALL-E prompts with per-variant mood variation
+│   └── prompt_builder.py  # Builds image prompts with per-variant mood variation
 ├── application/
 │   └── image_builder_service.py  # Orchestrates generate → compose → upload; uses asyncio.gather for parallelism; isolates per-image failures
 └── infrastructure/
-    ├── dalle_generator.py   # DALL-E 3 via httpx (no openai SDK)
-    ├── vertex_generator.py  # Vertex AI Imagen stub (raises NotImplementedError)
-    ├── pillow_composer.py   # Pillow: 1200×628 crop + text bar + CTA pill
-    └── firebase_storage.py  # Firebase Storage upload via asyncio.to_thread
+    ├── generators/openrouter_generator.py  # Image models via OpenRouter /chat/completions
+    ├── generators/ollama_generator.py      # Local Ollama server via /api/generate
+    ├── composer/pillow_composer.py         # Pillow: 1200×628 crop + text bar + CTA pill
+    └── storage/firebase_storage.py         # Firebase Storage upload via asyncio.to_thread
 
 image_builder_tool.py  # @tool entry point; _build_service() selects generator via IMAGE_PROVIDER env var
 ```
@@ -56,7 +64,7 @@ The `ImageBuilderService.build()` method uses `asyncio.gather(return_exceptions=
 
 ### Adding a new image provider
 
-1. Create `src/agent/tools/image_builder/infrastructure/my_provider.py` implementing `ImageGeneratorPort`.
+1. Create `src/agent/tools/image_builder/infrastructure/generators/my_provider.py` implementing `ImageGeneratorPort`.
 2. Register it in the `_GENERATORS` dict in `image_builder_tool.py`.
 3. Set `IMAGE_PROVIDER=myprovider` at runtime.
 
@@ -66,6 +74,6 @@ Tests are under `tests/` and mirror the `src/` structure:
 - `tests/test_image_builder_tool.py` — integration-style tests for the `@tool` entry point (mocks `_build_service`)
 - `tests/unit/domain/` — pure domain logic tests (no mocks needed)
 - `tests/unit/application/` — service orchestration tests (mocks ports)
-- `tests/unit/infrastructure/` — adapter tests (uses `pytest-httpx` for DALL-E HTTP mocking)
+- `tests/unit/infrastructure/` — adapter tests (uses `pytest-httpx` to mock provider HTTP calls)
 
 `pytest.ini` sets `asyncio_mode = auto`, so `async def test_*` functions work without decorators.

@@ -52,7 +52,7 @@ def test_result_model_dump_is_serializable():
         headline="Save time every day",
         cta_text="Start free trial",
         prompt_used="A background...",
-        provider="dalle3",
+        provider="openrouter",
     )
     result = ImageBuildResult(
         brief=brief,
@@ -62,5 +62,5 @@ def test_result_model_dump_is_serializable():
     )
     dumped = result.model_dump()
     assert dumped["status"] == "success"
-    assert dumped["creatives"][0]["provider"] == "dalle3"
+    assert dumped["creatives"][0]["provider"] == "openrouter"
     assert isinstance(dumped["brief"]["style_hints"], list)
