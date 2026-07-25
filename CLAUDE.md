@@ -46,26 +46,29 @@ The code follows **Domain-Driven Design** with a strict layering rule: inner lay
 ```
 src/agent/tools/image_builder/
 ├── domain/          # Pure Python — no framework imports
-│   ├── models.py          # Pydantic v2 value objects: ImageBrief, GeneratedImage, ComposedCreative, ImageBuildResult
-│   ├── ports.py           # Abstract base classes: ImageGeneratorPort, ImageComposerPort, ImageStoragePort
+│   ├── models.py          # Pydantic v2 value objects: ImageBrief, ComposedCreative, ImageBuildResult (re-exports GeneratedImage from shared)
+│   ├── ports.py           # Abstract base classes: ImageComposerPort, ImageStoragePort
 │   └── prompt_builder.py  # Builds image prompts with per-variant mood variation
 ├── application/
 │   └── image_builder_service.py  # Orchestrates generate → compose → upload; uses asyncio.gather for parallelism; isolates per-image failures
 └── infrastructure/
-    ├── generators/openrouter_generator.py  # Image models via OpenRouter /chat/completions
-    ├── generators/ollama_generator.py      # Local Ollama server via /api/generate
-    ├── composer/pillow_composer.py         # Pillow: 1200×628 crop + text bar + CTA pill
-    └── storage/firebase_storage.py         # Firebase Storage upload via asyncio.to_thread
+    ├── composer/pillow_composer.py   # Pillow: 1200×628 crop + text bar + CTA pill
+    └── storage/firebase_storage.py   # Firebase Storage upload via asyncio.to_thread
 
-image_builder_tool.py  # @tool entry point; _build_service() selects generator via IMAGE_PROVIDER env var
+image_builder_tool.py  # @tool entry point; builds the generator via src/shared/image_gen
+
+src/shared/
+├── openrouter/credentials.py   # OpenRouterCredentials: env read once, shared by the LLM and image clients
+├── llm/                        # LLMClientPort + OpenRouter/Ollama clients; build_llm_client() ← LLM_PROVIDER
+└── image_gen/                  # ImageGeneratorPort + OpenRouter/Ollama generators; build_image_generator() ← IMAGE_PROVIDER
 ```
 
 The `ImageBuilderService.build()` method uses `asyncio.gather(return_exceptions=True)` to run all image generation in parallel and isolate failures — a single variant failing does not abort the whole job. The `status` field in the result is `"success"` / `"partial"` / `"failed"` depending on how many variants succeeded.
 
 ### Adding a new image provider
 
-1. Create `src/agent/tools/image_builder/infrastructure/generators/my_provider.py` implementing `ImageGeneratorPort`.
-2. Register it in the `_GENERATORS` dict in `image_builder_tool.py`.
+1. Create `src/shared/image_gen/infrastructure/my_provider.py` implementing `ImageGeneratorPort`.
+2. Register it in the `_GENERATORS` dict in `src/shared/image_gen/factory.py`.
 3. Set `IMAGE_PROVIDER=myprovider` at runtime.
 
 ## Testing

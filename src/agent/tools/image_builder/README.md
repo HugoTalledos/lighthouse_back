@@ -125,20 +125,22 @@ creatives/{project_id}/{business_name_slug}_{variant_index}_{timestamp}.png
 src/agent/tools/image_builder/
 ├── domain/
 │   ├── models.py            # Pydantic v2 value objects (ImageBrief, ImageBuildResult, …)
-│   ├── ports.py             # Abstract ports (ImageGeneratorPort, ImageComposerPort, ImageStoragePort)
+│   ├── ports.py             # Abstract ports (ImageComposerPort, ImageStoragePort)
 │   └── prompt_builder.py    # Builds image prompts with per-variant mood variation
 ├── application/
 │   └── image_builder_service.py  # Orchestrates: generate → compose → upload
 ├── infrastructure/
-│   ├── generators/
-│   │   ├── openrouter_generator.py  # Image models via OpenRouter /chat/completions
-│   │   └── ollama_generator.py      # Local Ollama server via /api/generate
 │   ├── composer/
 │   │   └── pillow_composer.py       # Pillow: 1200×628 crop + text bar + CTA pill
 │   └── storage/
 │       └── firebase_storage.py      # Firebase Storage upload (non-blocking via asyncio.to_thread)
 └── image_builder_tool.py    # @tool entry point + _build_service() factory
 ```
+
+Image generation lives in `src/shared/image_gen/` (`ImageGeneratorPort`, the
+OpenRouter and Ollama adapters, and `build_image_generator()`), shared with any
+other tool that needs images — the same way `src/shared/llm/` serves text
+generation.
 
 The tool uses Domain-Driven Design: the domain layer has zero framework dependencies, infrastructure adapters are swapped via environment variables, and partial failures (one image fails) are isolated — the tool always returns whatever it managed to generate.
 
@@ -150,13 +152,13 @@ The tool uses Domain-Driven Design: the domain layer has zero framework dependen
 python3 -m pytest -v
 ```
 
-Expected: 28 tests, all passing.
+Expected: 154 tests, all passing.
 
 ---
 
 ## Adding a new image provider
 
-1. Create `src/agent/image_builder/infrastructure/my_provider.py` implementing `ImageGeneratorPort`:
+1. Create `src/shared/image_gen/infrastructure/my_provider.py` implementing `ImageGeneratorPort`:
 
 ```python
 from ..domain.ports import ImageGeneratorPort
@@ -168,11 +170,14 @@ class MyProvider(ImageGeneratorPort):
         ...
 ```
 
-2. Register it in `_build_service()` in `image_builder_tool.py`:
+2. Register it in `_GENERATORS` in `src/shared/image_gen/factory.py`:
 
 ```python
-elif provider == "myprovider":
-    generator = MyProvider()
+_GENERATORS = {
+    "openrouter": OpenRouterImageGenerator,
+    "ollama": OllamaImageGenerator,
+    "myprovider": MyProvider,
+}
 ```
 
 3. Set `IMAGE_PROVIDER=myprovider` at runtime.
