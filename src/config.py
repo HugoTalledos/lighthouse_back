@@ -1,0 +1,33 @@
+from dotenv import load_dotenv
+from langchain.chat_models import init_chat_model
+from langchain_ollama import ChatOllama
+from langgraph.checkpoint.memory import MemorySaver
+
+from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
+from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
+from src.agent.tools.landing_builder.landing_builder_tool import landing_builder_tool
+
+
+load_dotenv()
+
+memory = MemorySaver()
+
+tools = [
+    campaign_builder_tool,
+    image_builder_tool,
+    landing_builder_tool
+]
+
+model = ChatOllama(
+    model="qwen2.5-coder:7b",
+    temperature=0.5,
+    max_tokens=1000,
+    top_p=1.0,
+    frequency_penalty=0.0,
+    presence_penalty=0.0,
+).bind_tools(tools)
+
+
+## El thread_id es el id de la conversación. Como es el mismo va a conservar el estado de la conversación.
+## Si quisiera una conversacion nueva, tendria que cambiar el thread_id.
+graph_config = { "configurable": { "thread_id": "1" } }
