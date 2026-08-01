@@ -1,5 +1,5 @@
-from src.graph import build_graph
-from src.config import graph_config
+from src.agent.graph import build_graph
+from src.agent.config import graph_config
 
 def stream_grap_updates(user_input: str):
     graph = build_graph()

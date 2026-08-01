@@ -1,8 +1,8 @@
 from langchain_core.messages import SystemMessage
 from langgraph.graph import StateGraph, START
 from langgraph.prebuilt import ToolNode, tools_condition
-from src.config import tools, memory, model
-from src.state import State
+from src.agent.config import tools, memory, model
+from src.agent.state import State
 
 def build_graph() -> StateGraph:
     graph_bulder = StateGraph(State)
