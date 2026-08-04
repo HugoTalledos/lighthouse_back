@@ -11,7 +11,7 @@ def _campaign_config():
 
 async def test_approve_campaign_tool_marks_resource_approved():
     with patch(
-        "src.agent.tools.campaign_builder.approve_campaign_tool.FirestoreProjectRepository"
+        "src.agent.tools.campaign_builder.approve_campaign_tool.get_project_repository"
     ) as mock_repo_cls:
         mock_repo = MagicMock()
         mock_repo_cls.return_value = mock_repo
@@ -42,7 +42,7 @@ async def test_approve_campaign_tool_rejects_empty_config():
 
 async def test_approve_campaign_tool_reports_repository_failure():
     with patch(
-        "src.agent.tools.campaign_builder.approve_campaign_tool.FirestoreProjectRepository"
+        "src.agent.tools.campaign_builder.approve_campaign_tool.get_project_repository"
     ) as mock_repo_cls:
         mock_repo = MagicMock()
         mock_repo.update_resource.side_effect = RuntimeError("firestore down")

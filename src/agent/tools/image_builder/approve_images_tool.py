@@ -3,7 +3,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
+from src.projects.infrastructure.repo_provider import get_project_repository
 
 
 @tool
@@ -24,7 +24,7 @@ async def approve_images_tool(
         return {"project_id": project_id, "status": "failed", "errors": ["no matching creatives for variant_indices"]}
 
     try:
-        FirestoreProjectRepository().update_resource(
+        get_project_repository().update_resource(
             project_id, "images",
             {"creatives": [
                 {

@@ -47,6 +47,25 @@ def test_get_or_create_by_thread_creates_new_project_when_none_exists(repo):
     assert project.project_id
 
 
+def test_get_or_create_by_thread_writes_native_datetimes_on_creation(repo):
+    repo._collection.where.return_value.limit.return_value.stream.return_value = []
+    mock_transaction = MagicMock()
+    repo._db.transaction.return_value = mock_transaction
+
+    with patch(
+        "src.projects.infrastructure.firestore_repository.firestore.transactional",
+        lambda fn: fn,
+    ):
+        project = repo.get_or_create_by_thread("t1")
+
+    mock_transaction.set.assert_called_once()
+    _, written_doc = mock_transaction.set.call_args[0]
+    assert isinstance(written_doc["created_at"], datetime)
+    assert isinstance(written_doc["updated_at"], datetime)
+    assert written_doc["created_at"] == project.created_at
+    assert written_doc["updated_at"] == project.updated_at
+
+
 def test_get_or_create_by_thread_returns_existing_when_transaction_sees_concurrent_write(repo):
     now = datetime.now(timezone.utc)
     existing_project = Project(

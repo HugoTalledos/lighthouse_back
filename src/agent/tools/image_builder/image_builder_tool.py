@@ -4,7 +4,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from src.shared.image_gen.factory import build_image_generator
-from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
+from src.projects.infrastructure.repo_provider import get_project_repository
 from .domain.models import ImageBrief
 from .application.image_builder_service import ImageBuilderService
 from .infrastructure.composer.pillow_composer import PillowImageComposer
@@ -30,7 +30,7 @@ async def image_builder_tool(brief_dict: dict, state: Annotated[dict, InjectedSt
     brief = ImageBrief.model_validate({**brief_dict, "project_id": state["project_id"]})
     service = _build_service()
     result = await service.build(brief)
-    FirestoreProjectRepository().upsert_summary(
+    get_project_repository().upsert_summary(
         brief.project_id, brief.business_name, brief.value_proposition
     )
     return result.model_dump(mode="json")

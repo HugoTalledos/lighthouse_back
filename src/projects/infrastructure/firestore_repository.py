@@ -53,7 +53,15 @@ class FirestoreProjectRepository(ProjectRepositoryPort):
                     return Project.model_validate(existing_in_txn[0].to_dict())
 
                 doc_ref = self._collection.document(project_id)
-                transaction.set(doc_ref, new_project.model_dump(mode="json"))
+                # Use native datetime objects for created_at/updated_at here (unlike
+                # the outbox-fallback path below, which needs ISO strings because
+                # LocalOutbox serializes with plain json.dumps) so Firestore stores
+                # this field as a Timestamp consistently with _write_summary/
+                # _write_resource, which also write native datetimes.
+                doc = new_project.model_dump(mode="json")
+                doc["created_at"] = new_project.created_at
+                doc["updated_at"] = new_project.updated_at
+                transaction.set(doc_ref, doc)
                 return new_project
 
             return _get_or_create(self._db.transaction())

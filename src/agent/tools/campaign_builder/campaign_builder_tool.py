@@ -6,7 +6,7 @@ from langgraph.prebuilt import InjectedState
 from .domain.models import CampaignBrief
 from .application.campaign_builder_service import CampaignBuilderService
 from src.shared.llm.factory import build_llm_client
-from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
+from src.projects.infrastructure.repo_provider import get_project_repository
 
 
 @tool
@@ -22,7 +22,7 @@ async def campaign_builder_tool(brief_dict: dict, state: Annotated[dict, Injecte
     llm = build_llm_client()
     service = CampaignBuilderService(llm)
     result = await service.build(brief)
-    FirestoreProjectRepository().upsert_summary(
+    get_project_repository().upsert_summary(
         brief.project_id, brief.business_name, brief.value_proposition
     )
     return result.model_dump(mode="json")

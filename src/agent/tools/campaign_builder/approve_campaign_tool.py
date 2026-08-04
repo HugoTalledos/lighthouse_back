@@ -3,7 +3,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
+from src.projects.infrastructure.repo_provider import get_project_repository
 
 
 @tool
@@ -20,7 +20,7 @@ async def approve_campaign_tool(campaign_config: dict, state: Annotated[dict, In
         return {"project_id": project_id, "status": "failed", "errors": ["campaign_config is empty"]}
 
     try:
-        FirestoreProjectRepository().update_resource(
+        get_project_repository().update_resource(
             project_id, "campaign", {"config": campaign_config}, "approved",
         )
         return {"project_id": project_id, "status": "approved", "errors": []}

@@ -4,7 +4,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
+from src.projects.infrastructure.repo_provider import get_project_repository
 from .application.landing_promotion_service import LandingPromotionService
 from .infrastructure.github_template_fetcher import GithubTemplateFetcher
 from .infrastructure.landing_storage import FirebaseLandingStorage
@@ -36,7 +36,7 @@ async def promote_landing_tool(composition_dict: dict, state: Annotated[dict, In
     project_id = state["project_id"]
     result = await _build_promotion_service().promote(project_id, composition_dict)
     if result.status == "success":
-        FirestoreProjectRepository().update_resource(
+        get_project_repository().update_resource(
             project_id, "landing",
             {"storage_path": result.storage_path, "version": result.version},
             "approved",

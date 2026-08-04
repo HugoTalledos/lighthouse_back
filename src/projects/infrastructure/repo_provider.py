@@ -1,0 +1,51 @@
+from __future__ import annotations
+from .firestore_repository import FirestoreProjectRepository
+from ..domain.ports import ProjectRepositoryPort
+
+
+class _LazyProjectRepository:
+    def __init__(self) -> None:
+        self._instance: ProjectRepositoryPort | None = None
+
+    def _get(self) -> ProjectRepositoryPort | None:
+        if self._instance is None:
+            try:
+                self._instance = FirestoreProjectRepository()
+            except Exception:
+                return None
+        return self._instance
+
+    def get_or_create_by_thread(self, thread_id: str):
+        repo = self._get()
+        if repo is None:
+            from datetime import datetime, timezone
+            import uuid
+            from ..domain.models import Project
+            now = datetime.now(timezone.utc)
+            return Project(project_id=str(uuid.uuid4()), thread_ids=[thread_id], created_at=now, updated_at=now)
+        return repo.get_or_create_by_thread(thread_id)
+
+    def upsert_summary(self, project_id: str, business_name: str, value_proposition: str) -> None:
+        repo = self._get()
+        if repo is None:
+            return
+        try:
+            repo.upsert_summary(project_id, business_name, value_proposition)
+        except Exception:
+            pass
+
+    def update_resource(self, project_id: str, resource, payload: dict, status: str = "approved") -> None:
+        repo = self._get()
+        if repo is None:
+            return
+        try:
+            repo.update_resource(project_id, resource, payload, status)
+        except Exception:
+            pass
+
+
+_project_repository = _LazyProjectRepository()
+
+
+def get_project_repository() -> _LazyProjectRepository:
+    return _project_repository

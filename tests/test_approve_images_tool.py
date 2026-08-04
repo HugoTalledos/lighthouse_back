@@ -11,7 +11,7 @@ def _creatives():
 
 async def test_approve_images_tool_marks_selected_variants_approved():
     with patch(
-        "src.agent.tools.image_builder.approve_images_tool.FirestoreProjectRepository"
+        "src.agent.tools.image_builder.approve_images_tool.get_project_repository"
     ) as mock_repo_cls:
         mock_repo = MagicMock()
         mock_repo_cls.return_value = mock_repo
@@ -47,7 +47,7 @@ async def test_approve_images_tool_rejects_no_matching_variants():
 
 async def test_approve_images_tool_reports_repository_failure():
     with patch(
-        "src.agent.tools.image_builder.approve_images_tool.FirestoreProjectRepository"
+        "src.agent.tools.image_builder.approve_images_tool.get_project_repository"
     ) as mock_repo_cls:
         mock_repo = MagicMock()
         mock_repo.update_resource.side_effect = RuntimeError("firestore down")

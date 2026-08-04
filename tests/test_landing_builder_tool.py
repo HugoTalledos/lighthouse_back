@@ -38,11 +38,13 @@ async def test_tool_returns_dict_with_status():
     with patch(
         "src.agent.tools.landing_builder.landing_builder_tool._build_service"
     ) as mock_factory, patch(
-        "src.agent.tools.landing_builder.landing_builder_tool.FirestoreProjectRepository"
-    ) as mock_repo_cls:
+        "src.agent.tools.landing_builder.landing_builder_tool.get_project_repository"
+    ) as mock_get_repo:
         mock_service = MagicMock()
         mock_service.build = AsyncMock(return_value=stub_result)
         mock_factory.return_value = mock_service
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
 
         from src.agent.tools.landing_builder.landing_builder_tool import landing_builder_tool
         result = await landing_builder_tool.ainvoke({
@@ -52,6 +54,7 @@ async def test_tool_returns_dict_with_status():
 
     assert result["status"] == "success"
     assert result["preview_url"] == "https://preview.example.com"
+    mock_repo.upsert_summary.assert_called_once_with("proj-1", "Acme", "Saves time")
 
 
 async def test_tool_raises_on_invalid_brief():

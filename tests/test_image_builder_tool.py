@@ -44,7 +44,7 @@ async def test_tool_returns_dict_with_status(monkeypatch):
     with patch(
         "src.agent.tools.image_builder.image_builder_tool._build_service"
     ) as mock_factory, patch(
-        "src.agent.tools.image_builder.image_builder_tool.FirestoreProjectRepository"
+        "src.agent.tools.image_builder.image_builder_tool.get_project_repository"
     ):
         mock_service = MagicMock()
         mock_service.build = AsyncMock(return_value=stub_result)

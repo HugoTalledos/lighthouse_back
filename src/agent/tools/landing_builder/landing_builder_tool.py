@@ -5,7 +5,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from src.shared.llm.factory import build_llm_client
-from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
+from src.projects.infrastructure.repo_provider import get_project_repository
 from .domain.models import LandingBrief
 from .application.landing_builder_service import LandingBuilderService
 from .infrastructure.github_template_fetcher import GithubTemplateFetcher
@@ -38,7 +38,7 @@ async def landing_builder_tool(brief_dict: dict, state: Annotated[dict, Injected
     """
     brief = LandingBrief.model_validate({**brief_dict, "project_id": state["project_id"]})
     result = await _build_service().build(brief)
-    FirestoreProjectRepository().upsert_summary(
+    get_project_repository().upsert_summary(
         brief.project_id, brief.business_name, brief.value_proposition
     )
     return result.model_dump(mode="json")

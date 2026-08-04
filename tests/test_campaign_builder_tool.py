@@ -56,7 +56,7 @@ async def test_tool_returns_dict_with_status(monkeypatch):
         "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
     ), patch(
-        "src.agent.tools.campaign_builder.campaign_builder_tool.FirestoreProjectRepository"
+        "src.agent.tools.campaign_builder.campaign_builder_tool.get_project_repository"
     ):
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({
@@ -78,7 +78,7 @@ async def test_tool_result_is_serializable(monkeypatch):
         "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
     ), patch(
-        "src.agent.tools.campaign_builder.campaign_builder_tool.FirestoreProjectRepository"
+        "src.agent.tools.campaign_builder.campaign_builder_tool.get_project_repository"
     ):
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({
@@ -108,7 +108,7 @@ async def test_tool_captures_llm_error_in_result(monkeypatch):
         "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
     ), patch(
-        "src.agent.tools.campaign_builder.campaign_builder_tool.FirestoreProjectRepository"
+        "src.agent.tools.campaign_builder.campaign_builder_tool.get_project_repository"
     ):
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({

@@ -27,11 +27,13 @@ async def test_tool_returns_dict_with_status():
     with patch(
         "src.agent.tools.landing_builder.promote_landing_tool._build_promotion_service"
     ) as mock_factory, patch(
-        "src.agent.tools.landing_builder.promote_landing_tool.FirestoreProjectRepository"
-    ) as mock_repo_cls:
+        "src.agent.tools.landing_builder.promote_landing_tool.get_project_repository"
+    ) as mock_get_repo:
         mock_service = MagicMock()
         mock_service.promote = AsyncMock(return_value=stub_result)
         mock_factory.return_value = mock_service
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
 
         from src.agent.tools.landing_builder.promote_landing_tool import promote_landing_tool
         result = await promote_landing_tool.ainvoke({
@@ -41,14 +43,20 @@ async def test_tool_returns_dict_with_status():
 
     assert result["status"] == "success"
     assert result["storage_path"] == "landings/proj-1/20260710T000000Z/source.tar.gz"
+    mock_repo.update_resource.assert_called_once_with(
+        "proj-1", "landing",
+        {"storage_path": "landings/proj-1/20260710T000000Z/source.tar.gz", "version": "20260710T000000Z"},
+        "approved",
+    )
 
 
 async def test_tool_passes_composition_dict_through_to_service():
     with patch(
         "src.agent.tools.landing_builder.promote_landing_tool._build_promotion_service"
     ) as mock_factory, patch(
-        "src.agent.tools.landing_builder.promote_landing_tool.FirestoreProjectRepository"
-    ) as mock_repo_cls:
+        "src.agent.tools.landing_builder.promote_landing_tool.get_project_repository"
+    ) as mock_get_repo:
+        mock_get_repo.return_value = MagicMock()
         mock_service = MagicMock()
         mock_service.promote = AsyncMock(return_value=LandingPromoteResult(
             project_id="proj-1", version="v1", storage_path="path", status="success", errors=[],
