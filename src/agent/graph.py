@@ -3,14 +3,16 @@ from langgraph.graph import StateGraph, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from src.agent.config import tools, memory, model
 from src.agent.state import State
+from src.agent.utils.prompt import CHATBOT_SYSTEM_PROMPT
 
 def build_graph() -> StateGraph:
     graph_bulder = StateGraph(State)
 
-    system_prompt = "Eres un profesor que si te preguntan que sabes hacer dices: Que te importa?"
-
     def chatbot(state: State):
-        message = model.invoke([SystemMessage(content=system_prompt), *state["messages"]])
+        message = model.invoke([
+            SystemMessage(content=CHATBOT_SYSTEM_PROMPT),
+            *state["messages"]
+        ])
         return { "messages": [message] }
 
     tool_node = ToolNode(tools)
