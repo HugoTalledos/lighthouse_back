@@ -26,15 +26,18 @@ async def test_tool_returns_dict_with_status():
 
     with patch(
         "src.agent.tools.landing_builder.promote_landing_tool._build_promotion_service"
-    ) as mock_factory:
+    ) as mock_factory, patch(
+        "src.agent.tools.landing_builder.promote_landing_tool.FirestoreProjectRepository"
+    ) as mock_repo_cls:
         mock_service = MagicMock()
         mock_service.promote = AsyncMock(return_value=stub_result)
         mock_factory.return_value = mock_service
 
         from src.agent.tools.landing_builder.promote_landing_tool import promote_landing_tool
-        result = await promote_landing_tool.ainvoke(
-            {"project_id": "proj-1", "composition_dict": _composition_dict()}
-        )
+        result = await promote_landing_tool.ainvoke({
+            "composition_dict": _composition_dict(),
+            "state": {"project_id": "proj-1"},
+        })
 
     assert result["status"] == "success"
     assert result["storage_path"] == "landings/proj-1/20260710T000000Z/source.tar.gz"
@@ -43,7 +46,9 @@ async def test_tool_returns_dict_with_status():
 async def test_tool_passes_composition_dict_through_to_service():
     with patch(
         "src.agent.tools.landing_builder.promote_landing_tool._build_promotion_service"
-    ) as mock_factory:
+    ) as mock_factory, patch(
+        "src.agent.tools.landing_builder.promote_landing_tool.FirestoreProjectRepository"
+    ) as mock_repo_cls:
         mock_service = MagicMock()
         mock_service.promote = AsyncMock(return_value=LandingPromoteResult(
             project_id="proj-1", version="v1", storage_path="path", status="success", errors=[],
@@ -52,7 +57,10 @@ async def test_tool_passes_composition_dict_through_to_service():
 
         from src.agent.tools.landing_builder.promote_landing_tool import promote_landing_tool
         composition = _composition_dict()
-        await promote_landing_tool.ainvoke({"project_id": "proj-1", "composition_dict": composition})
+        await promote_landing_tool.ainvoke({
+            "composition_dict": composition,
+            "state": {"project_id": "proj-1"},
+        })
 
         mock_service.promote.assert_awaited_once_with("proj-1", composition)
 

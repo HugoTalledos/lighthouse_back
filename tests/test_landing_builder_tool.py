@@ -37,13 +37,18 @@ async def test_tool_returns_dict_with_status():
 
     with patch(
         "src.agent.tools.landing_builder.landing_builder_tool._build_service"
-    ) as mock_factory:
+    ) as mock_factory, patch(
+        "src.agent.tools.landing_builder.landing_builder_tool.FirestoreProjectRepository"
+    ) as mock_repo_cls:
         mock_service = MagicMock()
         mock_service.build = AsyncMock(return_value=stub_result)
         mock_factory.return_value = mock_service
 
         from src.agent.tools.landing_builder.landing_builder_tool import landing_builder_tool
-        result = await landing_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
+        result = await landing_builder_tool.ainvoke({
+            "brief_dict": {k: v for k, v in _valid_brief_dict().items() if k != "project_id"},
+            "state": {"project_id": "proj-1"},
+        })
 
     assert result["status"] == "success"
     assert result["preview_url"] == "https://preview.example.com"
@@ -52,7 +57,10 @@ async def test_tool_returns_dict_with_status():
 async def test_tool_raises_on_invalid_brief():
     from src.agent.tools.landing_builder.landing_builder_tool import landing_builder_tool
     with pytest.raises(Exception):
-        await landing_builder_tool.ainvoke({"brief_dict": {"business_name": "Only this"}})
+        await landing_builder_tool.ainvoke({
+            "brief_dict": {"business_name": "Only this"},
+            "state": {"project_id": "proj-1"},
+        })
 
 
 def test_build_service_raises_without_template_repo(monkeypatch):
