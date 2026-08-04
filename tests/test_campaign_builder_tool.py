@@ -10,7 +10,6 @@ from src.agent.tools.campaign_builder.domain.models import (
 
 def _valid_brief_dict():
     return dict(
-        project_id="proj-1",
         business_name="Acme",
         value_proposition="Saves time",
         target_customer="Professionals",
@@ -56,9 +55,13 @@ async def test_tool_returns_dict_with_status(monkeypatch):
     with patch(
         "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
+    ), patch(
+        "src.agent.tools.campaign_builder.campaign_builder_tool.FirestoreProjectRepository"
     ):
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
-        result = await campaign_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
+        result = await campaign_builder_tool.ainvoke({
+            "brief_dict": _valid_brief_dict(), "state": {"project_id": "proj-1"},
+        })
 
     assert result["status"] == "success"
     assert result["campaign"]["name"] == "Acme Campaign"
@@ -74,9 +77,13 @@ async def test_tool_result_is_serializable(monkeypatch):
     with patch(
         "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
+    ), patch(
+        "src.agent.tools.campaign_builder.campaign_builder_tool.FirestoreProjectRepository"
     ):
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
-        result = await campaign_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
+        result = await campaign_builder_tool.ainvoke({
+            "brief_dict": _valid_brief_dict(), "state": {"project_id": "proj-1"},
+        })
 
     import json
     json.dumps(result)  # must not raise
@@ -85,7 +92,9 @@ async def test_tool_result_is_serializable(monkeypatch):
 async def test_tool_raises_on_invalid_brief():
     from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
     with pytest.raises(Exception):
-        await campaign_builder_tool.ainvoke({"brief_dict": {"business_name": "Only this"}})
+        await campaign_builder_tool.ainvoke({
+            "brief_dict": {"business_name": "Only this"}, "state": {"project_id": "proj-1"},
+        })
 
 
 async def test_tool_captures_llm_error_in_result(monkeypatch):
@@ -98,9 +107,13 @@ async def test_tool_captures_llm_error_in_result(monkeypatch):
     with patch(
         "src.agent.tools.campaign_builder.campaign_builder_tool.build_llm_client",
         return_value=mock_client,
+    ), patch(
+        "src.agent.tools.campaign_builder.campaign_builder_tool.FirestoreProjectRepository"
     ):
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
-        result = await campaign_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
+        result = await campaign_builder_tool.ainvoke({
+            "brief_dict": _valid_brief_dict(), "state": {"project_id": "proj-1"},
+        })
 
     assert result["status"] == "failed"
     assert "LLM timeout" in result["errors"][0]
