@@ -6,6 +6,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
 from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
 from src.agent.tools.landing_builder.landing_builder_tool import landing_builder_tool
+from src.agent.tools.landing_builder.promote_landing_tool import promote_landing_tool
 
 
 load_dotenv()
@@ -13,9 +14,10 @@ load_dotenv()
 memory = MemorySaver()
 
 tools = [
-    campaign_builder_tool,
     image_builder_tool,
-    landing_builder_tool
+    campaign_builder_tool,
+    landing_builder_tool,
+    promote_landing_tool,
 ]
 
 model = ChatOllama(
