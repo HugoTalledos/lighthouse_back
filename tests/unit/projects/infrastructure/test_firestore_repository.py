@@ -47,6 +47,41 @@ def test_get_or_create_by_thread_creates_new_project_when_none_exists(repo):
     assert project.project_id
 
 
+def test_get_or_create_by_thread_returns_existing_when_transaction_sees_concurrent_write(repo):
+    now = datetime.now(timezone.utc)
+    existing_project = Project(
+        project_id="existing-p", thread_ids=["t1"], created_at=now, updated_at=now,
+    )
+    existing_doc = MagicMock()
+    existing_doc.to_dict.return_value = existing_project.model_dump(mode="json")
+
+    stream_mock = repo._collection.where.return_value.limit.return_value.stream
+    # Outer (pre-transaction) read: nothing found yet.
+    # Read inside the transaction: another caller already created the project.
+    stream_mock.side_effect = [[], [existing_doc]]
+    repo._db.transaction.return_value = MagicMock()
+
+    with patch(
+        "src.projects.infrastructure.firestore_repository.firestore.transactional",
+        lambda fn: fn,
+    ):
+        project = repo.get_or_create_by_thread("t1")
+
+    assert project.project_id == "existing-p"
+    repo._db.transaction.return_value.set.assert_not_called()
+
+
+def test_get_or_create_by_thread_dedupes_same_thread_during_outage(repo):
+    repo._collection.where.side_effect = RuntimeError("firestore down")
+
+    project1 = repo.get_or_create_by_thread("t1")
+    project2 = repo.get_or_create_by_thread("t1")
+
+    assert project1.project_id == project2.project_id
+    pending = repo._outbox.pending(project1.project_id)
+    assert len(pending) == 1
+
+
 def test_get_or_create_by_thread_falls_back_to_outbox_on_failure(repo):
     repo._collection.where.side_effect = RuntimeError("firestore down")
 

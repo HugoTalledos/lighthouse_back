@@ -18,8 +18,12 @@ class FirestoreProjectRepository(ProjectRepositoryPort):
         self._db = firestore.client()
         self._collection = self._db.collection("projects")
         self._outbox = outbox or LocalOutbox(root=outbox_root)
+        self._pending_by_thread: dict[str, Project] = {}
 
     def get_or_create_by_thread(self, thread_id: str) -> Project:
+        if thread_id in self._pending_by_thread:
+            return self._pending_by_thread[thread_id]
+
         try:
             existing = list(
                 self._collection.where("thread_ids", "array_contains", thread_id)
@@ -31,24 +35,38 @@ class FirestoreProjectRepository(ProjectRepositoryPort):
 
             project_id = str(uuid.uuid4())
             now = datetime.now(timezone.utc)
-            project = Project(
+            new_project = Project(
                 project_id=project_id, thread_ids=[thread_id], created_at=now, updated_at=now,
             )
 
             @firestore.transactional
-            def _create(transaction) -> None:
-                doc_ref = self._collection.document(project_id)
-                transaction.set(doc_ref, project.model_dump(mode="json"))
+            def _get_or_create(transaction) -> Project:
+                # Re-check for a concurrent write inside the transaction: another
+                # caller may have created a project for this thread between our
+                # outer read above and this transaction starting.
+                existing_in_txn = list(
+                    self._collection.where("thread_ids", "array_contains", thread_id)
+                    .limit(1)
+                    .stream(transaction=transaction)
+                )
+                if existing_in_txn:
+                    return Project.model_validate(existing_in_txn[0].to_dict())
 
-            _create(self._db.transaction())
-            return project
+                doc_ref = self._collection.document(project_id)
+                transaction.set(doc_ref, new_project.model_dump(mode="json"))
+                return new_project
+
+            return _get_or_create(self._db.transaction())
         except Exception:
+            if thread_id in self._pending_by_thread:
+                return self._pending_by_thread[thread_id]
             project_id = str(uuid.uuid4())
             now = datetime.now(timezone.utc)
             project = Project(
                 project_id=project_id, thread_ids=[thread_id], created_at=now, updated_at=now,
             )
             self._outbox.enqueue(project_id, "create_project", project.model_dump(mode="json"))
+            self._pending_by_thread[thread_id] = project
             return project
 
     def get(self, project_id: str) -> Project | None:
