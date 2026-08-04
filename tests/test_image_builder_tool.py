@@ -43,13 +43,19 @@ async def test_tool_returns_dict_with_status(monkeypatch):
 
     with patch(
         "src.agent.tools.image_builder.image_builder_tool._build_service"
-    ) as mock_factory:
+    ) as mock_factory, patch(
+        "src.agent.tools.image_builder.image_builder_tool.FirestoreProjectRepository"
+    ):
         mock_service = MagicMock()
         mock_service.build = AsyncMock(return_value=stub_result)
         mock_factory.return_value = mock_service
 
         from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
-        result = await image_builder_tool.ainvoke({"brief_dict": _valid_brief_dict()})
+        brief_without_project_id = {k: v for k, v in _valid_brief_dict().items() if k != "project_id"}
+        result = await image_builder_tool.ainvoke({
+            "brief_dict": brief_without_project_id,
+            "state": {"project_id": "proj-1"},
+        })
 
     assert result["status"] == "success"
     assert len(result["creatives"]) == 1
@@ -58,7 +64,10 @@ async def test_tool_returns_dict_with_status(monkeypatch):
 async def test_tool_raises_on_invalid_brief():
     from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
     with pytest.raises(Exception):
-        await image_builder_tool.ainvoke({"brief_dict": {"business_name": "Only this"}})
+        await image_builder_tool.ainvoke({
+            "brief_dict": {"business_name": "Only this"},
+            "state": {"project_id": "proj-1"},
+        })
 
 
 def test_build_service_selects_openrouter_by_default(monkeypatch):

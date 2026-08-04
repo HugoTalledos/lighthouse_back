@@ -6,6 +6,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
 from src.agent.tools.campaign_builder.approve_campaign_tool import approve_campaign_tool
 from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
+from src.agent.tools.image_builder.approve_images_tool import approve_images_tool
 from src.agent.tools.landing_builder.landing_builder_tool import landing_builder_tool
 from src.agent.tools.landing_builder.promote_landing_tool import promote_landing_tool
 
@@ -16,6 +17,7 @@ memory = MemorySaver()
 
 tools = [
     image_builder_tool,
+    approve_images_tool,
     campaign_builder_tool,
     approve_campaign_tool,
     landing_builder_tool,

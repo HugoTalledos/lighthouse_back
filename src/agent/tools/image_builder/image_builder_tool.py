@@ -1,7 +1,10 @@
 from __future__ import annotations
+from typing import Annotated
 from langchain_core.tools import tool
+from langgraph.prebuilt import InjectedState
 
 from src.shared.image_gen.factory import build_image_generator
+from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
 from .domain.models import ImageBrief
 from .application.image_builder_service import ImageBuilderService
 from .infrastructure.composer.pillow_composer import PillowImageComposer
@@ -17,13 +20,17 @@ def _build_service() -> ImageBuilderService:
 
 
 @tool
-async def image_builder_tool(brief_dict: dict) -> dict:
+async def image_builder_tool(brief_dict: dict, state: Annotated[dict, InjectedState]) -> dict:
     """
     Generates ad creative images for a business validation campaign.
-    Input: serialized ImageBrief dict.
+    Input: serialized ImageBrief dict (without project_id — it is resolved
+    automatically from the current conversation).
     Output: serialized ImageBuildResult dict.
     """
-    brief = ImageBrief.model_validate(brief_dict)
+    brief = ImageBrief.model_validate({**brief_dict, "project_id": state["project_id"]})
     service = _build_service()
     result = await service.build(brief)
+    FirestoreProjectRepository().upsert_summary(
+        brief.project_id, brief.business_name, brief.value_proposition
+    )
     return result.model_dump(mode="json")
