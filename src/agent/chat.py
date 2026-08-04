@@ -3,12 +3,13 @@ from src.agent.config import graph_config
 
 def stream_grap_updates(user_input: str):
     graph = build_graph()
+    thread_id = graph_config["configurable"]["thread_id"]
 
     user_message = { "role": "user", "content": user_input }
     messages = [user_message]
 
     graph_stream = graph.stream(
-        { "messages": messages },
+        { "messages": messages, "thread_id": thread_id },
         config=graph_config,
         stream_mode="values"
     )
