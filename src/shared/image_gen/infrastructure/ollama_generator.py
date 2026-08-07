@@ -10,9 +10,9 @@ _TIMEOUT = 180.0
 
 
 class OllamaImageGenerator(ImageGeneratorPort):
-    def __init__(self) -> None:
+    def __init__(self, model: str) -> None:
         self._base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self._model = os.getenv("OLLAMA_IMAGE_MODEL", "x/flux2-klein:4b")
+        self._model = model
 
     async def generate(self, prompt: str, width: int, height: int) -> GeneratedImage:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:

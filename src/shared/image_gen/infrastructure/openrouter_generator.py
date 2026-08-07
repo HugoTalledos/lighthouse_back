@@ -1,6 +1,5 @@
 from __future__ import annotations
 import base64
-import os
 import httpx
 
 from src.shared.openrouter.credentials import OpenRouterCredentials
@@ -23,9 +22,9 @@ class OpenRouterImageGenerator(ImageGeneratorPort):
     returned image to the target creative size regardless.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, model: str) -> None:
         self._credentials = OpenRouterCredentials()
-        self._model = os.getenv("OPENROUTER_IMAGE_MODEL", "google/gemini-2.5-flash-image-preview")
+        self._model = model
 
     async def generate(self, prompt: str, width: int, height: int) -> GeneratedImage:
         sized_prompt = f"{prompt}\n\nTarget image dimensions: {width}x{height} pixels."

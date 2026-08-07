@@ -12,7 +12,6 @@ FAKE_PNG_B64 = base64.b64encode(FAKE_PNG).decode()
 
 async def test_generate_returns_generated_image(monkeypatch, httpx_mock: HTTPXMock):
     monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
-    monkeypatch.delenv("OLLAMA_IMAGE_MODEL", raising=False)
 
     httpx_mock.add_response(
         method="POST",
@@ -26,7 +25,7 @@ async def test_generate_returns_generated_image(monkeypatch, httpx_mock: HTTPXMo
         json={"model": "x/flux2-klein:4b", "response": "", "done": True, "image": FAKE_PNG_B64},
     )
 
-    generator = OllamaImageGenerator()
+    generator = OllamaImageGenerator(model="x/flux2-klein:4b")
     result = await generator.generate("A background image", 1200, 628)
 
     assert result.provider == "ollama"
@@ -38,7 +37,6 @@ async def test_generate_returns_generated_image(monkeypatch, httpx_mock: HTTPXMo
 
 async def test_generate_uses_env_var_overrides(monkeypatch, httpx_mock: HTTPXMock):
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://ollama.internal:9999")
-    monkeypatch.setenv("OLLAMA_IMAGE_MODEL", "x/other-model:1b")
 
     httpx_mock.add_response(
         method="POST",
@@ -52,7 +50,7 @@ async def test_generate_uses_env_var_overrides(monkeypatch, httpx_mock: HTTPXMoc
         json={"image": FAKE_PNG_B64},
     )
 
-    generator = OllamaImageGenerator()
+    generator = OllamaImageGenerator(model="x/other-model:1b")
     result = await generator.generate("A prompt", 512, 512)
 
     assert result.image_bytes == FAKE_PNG
@@ -60,7 +58,6 @@ async def test_generate_uses_env_var_overrides(monkeypatch, httpx_mock: HTTPXMoc
 
 async def test_api_error_raises(monkeypatch, httpx_mock: HTTPXMock):
     monkeypatch.delenv("OLLAMA_BASE_URL", raising=False)
-    monkeypatch.delenv("OLLAMA_IMAGE_MODEL", raising=False)
 
     httpx_mock.add_response(
         method="POST",
@@ -69,6 +66,6 @@ async def test_api_error_raises(monkeypatch, httpx_mock: HTTPXMock):
         json={"error": "model not found"},
     )
 
-    generator = OllamaImageGenerator()
+    generator = OllamaImageGenerator(model="x/flux2-klein:4b")
     with pytest.raises(httpx.HTTPStatusError):
         await generator.generate("A prompt", 1200, 628)

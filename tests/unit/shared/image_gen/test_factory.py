@@ -4,36 +4,37 @@ import pytest
 from src.shared.image_gen.factory import build_image_generator
 from src.shared.image_gen.infrastructure.openrouter_generator import OpenRouterImageGenerator
 from src.shared.image_gen.infrastructure.ollama_generator import OllamaImageGenerator
+from src.shared.llm_config.domain.models import LLMSettings
 
 
-def test_default_provider_returns_openrouter_generator(monkeypatch):
-    monkeypatch.delenv("IMAGE_PROVIDER", raising=False)
+def test_openrouter_settings_return_openrouter_generator(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
-    generator = build_image_generator()
+    settings = LLMSettings(
+        provider="openrouter",
+        model="google/gemini-2.5-flash-image-preview",
+        temperature=0.5,
+    )
+
+    generator = build_image_generator(settings)
+
     assert isinstance(generator, OpenRouterImageGenerator)
+    assert generator._model == "google/gemini-2.5-flash-image-preview"
 
 
-def test_openrouter_provider_returns_openrouter_generator(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "openrouter")
-    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
-    generator = build_image_generator()
-    assert isinstance(generator, OpenRouterImageGenerator)
+def test_ollama_settings_return_ollama_generator():
+    settings = LLMSettings(provider="ollama", model="x/flux2-klein:4b", temperature=0.5)
 
+    generator = build_image_generator(settings)
 
-def test_ollama_provider_returns_ollama_generator(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "ollama")
-    generator = build_image_generator()
     assert isinstance(generator, OllamaImageGenerator)
+    assert generator._model == "x/flux2-klein:4b"
 
 
-def test_unknown_provider_raises_value_error(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "midjourney")
-    with pytest.raises(ValueError, match="Unknown IMAGE_PROVIDER"):
-        build_image_generator()
+def test_image_generator_is_independent_of_the_text_llm_provider(monkeypatch):
+    """El eje de imagen se configura por su cuenta: nada de LLM_PROVIDER."""
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
+    text = LLMSettings(provider="ollama", model="llama3.1", temperature=0.5)
+    image = LLMSettings(provider="openrouter", model="google/gemini-2.5-flash-image-preview", temperature=0.5)
 
-
-@pytest.mark.parametrize("provider", ["dalle3", "vertex"])
-def test_removed_providers_are_no_longer_valid(monkeypatch, provider):
-    monkeypatch.setenv("IMAGE_PROVIDER", provider)
-    with pytest.raises(ValueError, match="Unknown IMAGE_PROVIDER"):
-        build_image_generator()
+    assert isinstance(build_image_generator(image), OpenRouterImageGenerator)
+    assert text.provider == "ollama"

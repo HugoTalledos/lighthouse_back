@@ -13,7 +13,6 @@ FAKE_PNG_B64 = base64.b64encode(FAKE_PNG).decode()
 
 async def test_generate_returns_generated_image_and_sends_auth_header(monkeypatch, httpx_mock: HTTPXMock):
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
-    monkeypatch.delenv("OPENROUTER_IMAGE_MODEL", raising=False)
     monkeypatch.delenv("OPENROUTER_HTTP_REFERER", raising=False)
     monkeypatch.delenv("OPENROUTER_X_TITLE", raising=False)
 
@@ -33,7 +32,7 @@ async def test_generate_returns_generated_image_and_sends_auth_header(monkeypatc
         },
     )
 
-    generator = OpenRouterImageGenerator()
+    generator = OpenRouterImageGenerator(model="google/gemini-2.5-flash-image-preview")
     result = await generator.generate("A prompt", 1200, 628)
 
     assert result.provider == "openrouter"
@@ -50,4 +49,4 @@ async def test_missing_api_key_raises_at_construction(monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
     with pytest.raises(ValueError, match="OPENROUTER_API_KEY environment variable is not set"):
-        OpenRouterImageGenerator()
+        OpenRouterImageGenerator(model="google/gemini-2.5-flash-image-preview")
