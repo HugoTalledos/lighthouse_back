@@ -4,6 +4,8 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import ValidationError
+
 from .domain.models import AppLLMConfig
 
 # src/shared/llm_config/loader.py -> raíz del repo
@@ -32,4 +34,9 @@ def load_llm_config() -> AppLLMConfig:
     except json.JSONDecodeError as e:
         raise ValueError(f"{path} is not valid JSON: {e}") from e
 
-    return AppLLMConfig.model_validate(payload)
+    try:
+        return AppLLMConfig.model_validate(payload)
+    except ValidationError as e:
+        raise ValueError(
+            f"{path} has invalid LLM config (APP_ENV={app_env!r}): {e}"
+        ) from e

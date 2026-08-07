@@ -67,3 +67,16 @@ def test_malformed_json_raises_value_error(tmp_path, monkeypatch):
 
     with pytest.raises(ValueError, match="not valid JSON"):
         load_llm_config()
+
+
+def test_invalid_schema_raises_value_error_with_path_and_app_env(tmp_path, monkeypatch):
+    _write(tmp_path, "llm.staging.json", {
+        "defaults": {"provider": "ollama", "model": "x"},  # missing temperature
+        "agent": {},
+        "tools": {},
+    })
+    monkeypatch.setattr(loader, "_PROJECT_ROOT", tmp_path)
+    monkeypatch.setenv("APP_ENV", "staging")
+
+    with pytest.raises(ValueError, match=r"llm\.staging\.json.*invalid LLM config.*APP_ENV='staging'"):
+        load_llm_config()
