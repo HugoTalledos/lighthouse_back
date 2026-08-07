@@ -6,7 +6,7 @@ from langgraph.prebuilt import InjectedState
 from .domain.models import CampaignBrief
 from .application.campaign_builder_service import CampaignBuilderService
 from src.shared.llm.factory import build_llm_client
-from src.projects.infrastructure.repo_provider import get_project_repository
+from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 
 
 @tool

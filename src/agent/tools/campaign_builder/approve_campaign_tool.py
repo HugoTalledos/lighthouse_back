@@ -3,7 +3,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from src.projects.infrastructure.repo_provider import get_project_repository
+from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 
 
 @tool

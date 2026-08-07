@@ -4,7 +4,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from src.shared.image_gen.factory import build_image_generator
-from src.projects.infrastructure.repo_provider import get_project_repository
+from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 from .domain.models import ImageBrief
 from .application.image_builder_service import ImageBuilderService
 from .infrastructure.composer.pillow_composer import PillowImageComposer

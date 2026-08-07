@@ -1,6 +1,6 @@
 from __future__ import annotations
 from .firestore_repository import FirestoreProjectRepository
-from ..domain.ports import ProjectRepositoryPort
+from ...domain.ports import ProjectRepositoryPort
 
 
 class _LazyProjectRepository:
@@ -20,7 +20,7 @@ class _LazyProjectRepository:
         if repo is None:
             from datetime import datetime, timezone
             import uuid
-            from ..domain.models import Project
+            from ...domain.models import Project
             now = datetime.now(timezone.utc)
             return Project(project_id=str(uuid.uuid4()), thread_ids=[thread_id], created_at=now, updated_at=now)
         return repo.get_or_create_by_thread(thread_id)

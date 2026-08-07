@@ -1,8 +1,8 @@
 from __future__ import annotations
 from fastapi import FastAPI
 
-from ..domain.ports import ProjectRepositoryPort
-from ..infrastructure.firestore_repository import FirestoreProjectRepository
+from ...domain.ports import ProjectRepositoryPort
+from ..persistence.firestore_repository import FirestoreProjectRepository
 from .routes import build_router
 
 

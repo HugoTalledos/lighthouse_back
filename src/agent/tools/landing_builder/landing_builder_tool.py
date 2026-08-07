@@ -5,7 +5,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from src.shared.llm.factory import build_llm_client
-from src.projects.infrastructure.repo_provider import get_project_repository
+from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 from .domain.models import LandingBrief
 from .application.landing_builder_service import LandingBuilderService
 from .infrastructure.github_template_fetcher import GithubTemplateFetcher

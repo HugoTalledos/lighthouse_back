@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
-from ..domain.ports import ProjectRepositoryPort
+from ...domain.ports import ProjectRepositoryPort
 
 
 def build_router(repo: ProjectRepositoryPort) -> APIRouter:

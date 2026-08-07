@@ -4,7 +4,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from src.projects.infrastructure.repo_provider import get_project_repository
+from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 from .application.landing_promotion_service import LandingPromotionService
 from .infrastructure.github_template_fetcher import GithubTemplateFetcher
 from .infrastructure.landing_storage import FirebaseLandingStorage

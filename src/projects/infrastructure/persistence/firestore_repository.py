@@ -6,8 +6,8 @@ from pathlib import Path
 import firebase_admin
 from firebase_admin import firestore
 
-from ..domain.models import Project, ResourceKind, ApprovalStatus
-from ..domain.ports import ProjectRepositoryPort
+from ...domain.models import Project, ResourceKind, ApprovalStatus
+from ...domain.ports import ProjectRepositoryPort
 from .outbox import LocalOutbox
 
 

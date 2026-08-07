@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 from src.projects.domain.models import Project, ResourceState
-from src.projects.api.app import create_app
+from src.projects.infrastructure.rest.app import create_app
 
 
 def _project(project_id="p1"):

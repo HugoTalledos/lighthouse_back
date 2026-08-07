@@ -1,5 +1,5 @@
 from __future__ import annotations
-from src.projects.infrastructure.outbox import LocalOutbox
+from src.projects.infrastructure.persistence.outbox import LocalOutbox
 
 
 def test_enqueue_then_pending_returns_entry(tmp_path):

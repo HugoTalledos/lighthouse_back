@@ -3,13 +3,13 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 import pytest
 from src.projects.domain.models import Project
-from src.projects.infrastructure.firestore_repository import FirestoreProjectRepository
+from src.projects.infrastructure.persistence.firestore_repository import FirestoreProjectRepository
 
 
 @pytest.fixture
 def repo(tmp_path):
-    with patch("src.projects.infrastructure.firestore_repository.firebase_admin") as fb, \
-         patch("src.projects.infrastructure.firestore_repository.firestore") as fs:
+    with patch("src.projects.infrastructure.persistence.firestore_repository.firebase_admin") as fb, \
+         patch("src.projects.infrastructure.persistence.firestore_repository.firestore") as fs:
         fb._apps = {"[DEFAULT]": True}
         mock_db = MagicMock()
         fs.client.return_value = mock_db
@@ -38,7 +38,7 @@ def test_get_or_create_by_thread_creates_new_project_when_none_exists(repo):
     repo._db.transaction.return_value = MagicMock()
 
     with patch(
-        "src.projects.infrastructure.firestore_repository.firestore.transactional",
+        "src.projects.infrastructure.persistence.firestore_repository.firestore.transactional",
         lambda fn: fn,
     ):
         project = repo.get_or_create_by_thread("t1")
@@ -53,7 +53,7 @@ def test_get_or_create_by_thread_writes_native_datetimes_on_creation(repo):
     repo._db.transaction.return_value = mock_transaction
 
     with patch(
-        "src.projects.infrastructure.firestore_repository.firestore.transactional",
+        "src.projects.infrastructure.persistence.firestore_repository.firestore.transactional",
         lambda fn: fn,
     ):
         project = repo.get_or_create_by_thread("t1")
@@ -81,7 +81,7 @@ def test_get_or_create_by_thread_returns_existing_when_transaction_sees_concurre
     repo._db.transaction.return_value = MagicMock()
 
     with patch(
-        "src.projects.infrastructure.firestore_repository.firestore.transactional",
+        "src.projects.infrastructure.persistence.firestore_repository.firestore.transactional",
         lambda fn: fn,
     ):
         project = repo.get_or_create_by_thread("t1")
