@@ -13,16 +13,20 @@ _TIMEOUT = 60.0
 
 
 class OllamaLocalClient(LLMClientPort):
-    def __init__(self) -> None:
+    def __init__(self, model: str, temperature: float = 0.7) -> None:
         self._base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        self._model = os.getenv("OLLAMA_MODEL", "llama3.1")
+        self._model = model
+        self._temperature = temperature
+
+    def _resolve_temperature(self, temperature: float | None) -> float:
+        return self._temperature if temperature is None else temperature
 
     async def complete(
         self,
         prompt: str,
         *,
         system: str | None = None,
-        temperature: float = 0.7,
+        temperature: float | None = None,
     ) -> str:
         messages = []
         if system:
@@ -36,7 +40,7 @@ class OllamaLocalClient(LLMClientPort):
                     "model": self._model,
                     "messages": messages,
                     "stream": False,
-                    "options": {"temperature": temperature},
+                    "options": {"temperature": self._resolve_temperature(temperature)},
                 },
             )
             response.raise_for_status()
@@ -49,7 +53,7 @@ class OllamaLocalClient(LLMClientPort):
         response_model: type[T],
         *,
         system: str | None = None,
-        temperature: float = 0.4,
+        temperature: float | None = None,
     ) -> T:
         messages = []
         if system:
@@ -64,7 +68,7 @@ class OllamaLocalClient(LLMClientPort):
                     "messages": messages,
                     "stream": False,
                     "format": response_model.model_json_schema(),
-                    "options": {"temperature": temperature},
+                    "options": {"temperature": self._resolve_temperature(temperature)},
                 },
             )
             response.raise_for_status()
@@ -83,7 +87,7 @@ class OllamaLocalClient(LLMClientPort):
         schema: dict,
         *,
         system: str | None = None,
-        temperature: float = 0.4,
+        temperature: float | None = None,
     ) -> dict:
         messages = []
         if system:
@@ -98,7 +102,7 @@ class OllamaLocalClient(LLMClientPort):
                     "messages": messages,
                     "stream": False,
                     "format": schema,
-                    "options": {"temperature": temperature},
+                    "options": {"temperature": self._resolve_temperature(temperature)},
                 },
             )
             response.raise_for_status()

@@ -13,7 +13,7 @@ class LLMClientPort(ABC):
         prompt: str,
         *,
         system: str | None = None,
-        temperature: float = 0.7,
+        temperature: float | None = None,
     ) -> str: ...
 
     @abstractmethod
@@ -23,7 +23,7 @@ class LLMClientPort(ABC):
         response_model: type[T],
         *,
         system: str | None = None,
-        temperature: float = 0.4,
+        temperature: float | None = None,
     ) -> T: ...
 
     @abstractmethod
@@ -33,5 +33,5 @@ class LLMClientPort(ABC):
         schema: dict,
         *,
         system: str | None = None,
-        temperature: float = 0.4,
+        temperature: float | None = None,
     ) -> dict: ...

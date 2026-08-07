@@ -15,7 +15,7 @@ async def test_complete_returns_content_and_sends_auth_header(monkeypatch, httpx
         json={"choices": [{"message": {"content": "hello"}}]},
     )
 
-    client = OpenRouterClient()
+    client = OpenRouterClient(model="openai/gpt-4o")
     result = await client.complete("Say hello")
 
     assert result == "hello"
@@ -28,4 +28,4 @@ async def test_missing_api_key_raises_at_construction(monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
     with pytest.raises(ValueError, match="OPENROUTER_API_KEY environment variable is not set"):
-        OpenRouterClient()
+        OpenRouterClient(model="openai/gpt-4o")

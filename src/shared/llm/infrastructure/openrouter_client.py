@@ -1,5 +1,4 @@
 from __future__ import annotations
-import os
 import json
 from typing import TypeVar
 import httpx
@@ -15,16 +14,20 @@ _TIMEOUT = 60.0
 
 
 class OpenRouterClient(LLMClientPort):
-    def __init__(self) -> None:
+    def __init__(self, model: str, temperature: float = 0.7) -> None:
         self._credentials = OpenRouterCredentials()
-        self._model = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o")
+        self._model = model
+        self._temperature = temperature
+
+    def _resolve_temperature(self, temperature: float | None) -> float:
+        return self._temperature if temperature is None else temperature
 
     async def complete(
         self,
         prompt: str,
         *,
         system: str | None = None,
-        temperature: float = 0.7,
+        temperature: float | None = None,
     ) -> str:
         messages = []
         if system:
@@ -38,7 +41,7 @@ class OpenRouterClient(LLMClientPort):
                 json={
                     "model": self._model,
                     "messages": messages,
-                    "temperature": temperature,
+                    "temperature": self._resolve_temperature(temperature),
                 },
             )
             response.raise_for_status()
@@ -51,7 +54,7 @@ class OpenRouterClient(LLMClientPort):
         response_type: type[T],
         *,
         system: str | None = None,
-        temperature: float = 0.4,
+        temperature: float | None = None,
     ) -> T:
         messages = []
         if system:
@@ -68,7 +71,7 @@ class OpenRouterClient(LLMClientPort):
                 json={
                     "model": self._model,
                     "messages": messages,
-                    "temperature": temperature,
+                    "temperature": self._resolve_temperature(temperature),
                     "response_format": {
                         "type": "json_schema",
                         "json_schema": {
@@ -93,7 +96,7 @@ class OpenRouterClient(LLMClientPort):
         schema: dict,
         *,
         system: str | None = None,
-        temperature: float = 0.4,
+        temperature: float | None = None,
     ) -> dict:
         messages = []
         if system:
@@ -107,7 +110,7 @@ class OpenRouterClient(LLMClientPort):
                 json={
                     "model": self._model,
                     "messages": messages,
-                    "temperature": temperature,
+                    "temperature": self._resolve_temperature(temperature),
                     "response_format": {
                         "type": "json_schema",
                         "json_schema": {

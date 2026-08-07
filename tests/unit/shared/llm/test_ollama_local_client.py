@@ -19,7 +19,7 @@ async def test_generate_structured_from_schema_returns_dict(monkeypatch, httpx_m
         url="http://localhost:11434/api/chat",
         json={"message": {"content": '{"name": "red"}'}},
     )
-    client = OllamaLocalClient()
+    client = OllamaLocalClient(model="llama3.1")
     result = await client.generate_structured_from_schema("What color?", _SCHEMA)
     assert result == {"name": "red"}
 
@@ -31,7 +31,7 @@ async def test_generate_structured_from_schema_sends_schema_as_format(monkeypatc
         url="http://localhost:11434/api/chat",
         json={"message": {"content": '{"name": "blue"}'}},
     )
-    client = OllamaLocalClient()
+    client = OllamaLocalClient(model="llama3.1")
     await client.generate_structured_from_schema("pick a color", _SCHEMA)
     request = httpx_mock.get_requests()[0]
     body = json.loads(request.content)
@@ -45,6 +45,6 @@ async def test_generate_structured_from_schema_raises_on_invalid_response(monkey
         url="http://localhost:11434/api/chat",
         json={"message": {"content": "not valid json"}},
     )
-    client = OllamaLocalClient()
+    client = OllamaLocalClient(model="llama3.1")
     with pytest.raises(ValueError, match="Failed to parse"):
         await client.generate_structured_from_schema("prompt", _SCHEMA)
