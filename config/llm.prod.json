@@ -1,0 +1,21 @@
+{
+  "defaults": {
+    "provider": "openrouter",
+    "model": "openai/gpt-4o",
+    "temperature": 0.5
+  },
+  "agent": {
+    "model": "openai/gpt-4o",
+    "temperature": 0.5,
+    "max_tokens": 1000,
+    "top_p": 1.0
+  },
+  "tools": {
+    "campaign_builder": {},
+    "landing_builder": {},
+    "image_builder": {
+      "provider": "openrouter",
+      "model": "google/gemini-2.5-flash-image-preview"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "defaults": {
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.5
+  },
+  "agent": {
+    "model": "qwen2.5-coder:7b",
+    "temperature": 0.5,
+    "max_tokens": 1000,
+    "top_p": 1.0
+  },
+  "tools": {
+    "campaign_builder": {},
+    "landing_builder": {},
+    "image_builder": {
+      "provider": "ollama",
+      "model": "x/flux2-klein:4b"
+    }
+  }
+}
