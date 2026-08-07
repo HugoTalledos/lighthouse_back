@@ -115,8 +115,24 @@ async def test_graph_exception_emits_error_then_done():
     events = await _collect(graph)
 
     assert [e.event for e in events] == ["start", "message", "error", "done"]
-    assert events[2].data == {"message": "llm unreachable"}
+    assert events[2].event == "error"
+    assert "llm unreachable" not in json.dumps(events[2].data)
+    assert events[2].data["message"] == "El turno falló por un error interno. Intenta de nuevo."
     assert events[3].data["project_id"] == "p1"
+
+
+async def test_multiple_tool_calls_in_one_ai_message_emit_one_event_each():
+    ai = AIMessage(content="", tool_calls=[
+        {"name": "image_builder_tool", "args": {"a": 1}, "id": "call_1"},
+        {"name": "campaign_builder_tool", "args": {"b": 2}, "id": "call_2"},
+    ])
+    graph = FakeGraph([{"chatbot": {"messages": [ai], "project_id": "p1"}}])
+
+    events = await _collect(graph)
+
+    assert [e.event for e in events] == ["start", "tool_call", "tool_call", "done"]
+    assert events[1].data == {"name": "image_builder_tool", "args": {"a": 1}}
+    assert events[2].data == {"name": "campaign_builder_tool", "args": {"b": 2}}
 
 
 async def test_empty_assistant_content_emits_no_message_event():

@@ -60,3 +60,17 @@ def test_chat_rejects_empty_message():
     response = _client(FakeGraph()).post("/chat", json={"message": "  "})
 
     assert response.status_code == 422
+
+
+def test_chat_rejects_message_over_max_length():
+    response = _client(FakeGraph()).post("/chat", json={"message": "a" * 8001})
+
+    assert response.status_code == 422
+
+
+def test_chat_rejects_thread_id_over_max_length():
+    response = _client(FakeGraph()).post(
+        "/chat", json={"message": "hola", "thread_id": "a" * 201}
+    )
+
+    assert response.status_code == 422

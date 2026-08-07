@@ -52,6 +52,7 @@ async def stream_chat(graph, message: str, thread_id: str) -> AsyncIterator[Chat
     """
     yield start_event(thread_id)
     project_id: str | None = None
+    stream = None
 
     try:
         stream = graph.astream(
@@ -67,8 +68,18 @@ async def stream_chat(graph, message: str, thread_id: str) -> AsyncIterator[Chat
                 events = _tool_events(payload) if node == "tools" else _chatbot_events(payload)
                 for event in events:
                     yield event
-    except Exception as exc:  # noqa: BLE001 - el turno entero se cayó
+    except Exception:  # noqa: BLE001 - el turno entero se cayó
         logger.exception("chat turn failed for thread %s", thread_id)
-        yield error_event(str(exc))
+        # No se manda el detalle crudo de la excepción al cliente: puede
+        # contener rutas del filesystem, URLs internas o nombres de buckets.
+        # El detalle completo ya quedó en el log vía logger.exception.
+        yield error_event("El turno falló por un error interno. Intenta de nuevo.")
+    finally:
+        # Si el cliente se desconecta a mitad del turno, cerramos el
+        # generador del grafo explícitamente. Los dobles de test no
+        # implementan aclose, así que protegemos la llamada.
+        aclose = getattr(stream, "aclose", None)
+        if aclose is not None:
+            await aclose()
 
     yield done_event(thread_id, project_id)

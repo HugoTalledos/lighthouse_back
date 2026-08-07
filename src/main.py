@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import secrets
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +14,11 @@ from src.projects.infrastructure.rest.routes import build_router
 def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
     """Si API_KEY no está seteada el API queda abierto: es el modo local."""
     expected = os.getenv("API_KEY")
-    if expected and x_api_key != expected:
+    if not expected:
+        return
+    # compare_digest evita filtrar por timing cuántos caracteres coinciden;
+    # falla si algún argumento es None, así que primero descartamos ese caso.
+    if x_api_key is None or not secrets.compare_digest(x_api_key, expected):
         raise HTTPException(status_code=401, detail="invalid api key")
 
 

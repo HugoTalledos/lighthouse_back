@@ -87,10 +87,19 @@ uvicorn src.main:app --reload --workers 1
 `done` y `error`. Si `thread_id` viene vacío el API genera uno y lo devuelve en
 el evento `start`; el cliente debe reenviarlo en los siguientes turnos.
 
+El evento `tool_result` lleva un campo `status`. Las tools de construcción
+(`campaign_builder_tool`, `image_builder_tool`, `landing_builder_tool`,
+`promote_landing_tool`) devuelven `"success"` / `"partial"` / `"failed"`
+(`"partial"` solo aplica a `image_builder_tool`, cuando algunas variantes
+fallan y otras no); las tools de aprobación (`approve_images_tool`,
+`approve_campaign_tool`) devuelven `"approved"` / `"failed"`.
+
 **El checkpointer es `MemorySaver` (en memoria), así que el API debe correr con
 un solo worker.** Con varios workers, dos turnos de la misma conversación pueden
 aterrizar en procesos distintos y perder el contexto. El historial también se
-pierde al reiniciar.
+pierde al reiniciar. Además, `MemorySaver` nunca desaloja: la memoria crece
+monótonamente con cada `thread_id` visto (cada `POST /chat` sin `thread_id`
+crea uno nuevo), y hoy la única forma de liberarla es reiniciar el proceso.
 
 ## Testing
 
