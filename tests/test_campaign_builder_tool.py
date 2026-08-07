@@ -46,7 +46,6 @@ def _canned_campaign():
 
 
 async def test_tool_returns_dict_with_status(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
 
     mock_client = MagicMock()
@@ -68,7 +67,6 @@ async def test_tool_returns_dict_with_status(monkeypatch):
 
 
 async def test_tool_result_is_serializable(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
 
     mock_client = MagicMock()
@@ -98,7 +96,6 @@ async def test_tool_raises_on_invalid_brief():
 
 
 async def test_tool_captures_llm_error_in_result(monkeypatch):
-    monkeypatch.setenv("LLM_PROVIDER", "openrouter")
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
 
     mock_client = MagicMock()

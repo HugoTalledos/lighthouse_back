@@ -37,8 +37,6 @@ def _stub_result(brief):
 
 
 async def test_tool_returns_dict_with_status(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "openrouter")
-
     brief = ImageBrief.model_validate(_valid_brief_dict())
     stub_result = _stub_result(brief)
 

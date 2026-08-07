@@ -26,13 +26,13 @@ Set the following environment variables before running:
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENROUTER_API_KEY` | Yes (when `IMAGE_PROVIDER=openrouter`) | OpenRouter API key |
+| `OPENROUTER_API_KEY` | Yes (when this tool's provider is `openrouter`) | OpenRouter API key |
 | `FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket name, e.g. `my-project.appspot.com` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | Path to Firebase service account JSON. If omitted, Application Default Credentials are used |
-| `IMAGE_PROVIDER` | No | Image generation backend: `openrouter` (default) or `ollama` |
-| `OPENROUTER_IMAGE_MODEL` | No | Image-capable model; defaults to `google/gemini-2.5-flash-image-preview` |
 | `OLLAMA_BASE_URL` | No | Ollama server URL; defaults to `http://localhost:11434` |
-| `OLLAMA_IMAGE_MODEL` | No | Ollama image model tag; defaults to `x/flux2-klein:4b` |
+
+Provider and model for this tool are set in `config/llm.{APP_ENV}.json` (see
+`CLAUDE.md`'s "Configuración de LLM" section), not via env vars.
 
 > **Note on resolution:** OpenRouter has no dedicated images endpoint — image models are called through `/chat/completions` and accept no width/height, so the target size is only a hint inside the prompt and the composer center-crops the result. Ollama does accept `width`/`height` directly.
 
@@ -138,11 +138,11 @@ src/agent/tools/image_builder/
 ```
 
 Image generation lives in `src/shared/image_gen/` (`ImageGeneratorPort`, the
-OpenRouter and Ollama adapters, and `build_image_generator()`), shared with any
-other tool that needs images — the same way `src/shared/llm/` serves text
-generation.
+OpenRouter and Ollama adapters, and `build_image_generator(settings)`), shared
+with any other tool that needs images — the same way `src/shared/llm/` serves
+text generation.
 
-The tool uses Domain-Driven Design: the domain layer has zero framework dependencies, infrastructure adapters are swapped via environment variables, and partial failures (one image fails) are isolated — the tool always returns whatever it managed to generate.
+The tool uses Domain-Driven Design: the domain layer has zero framework dependencies, infrastructure adapters are swapped via `config/llm.{APP_ENV}.json`, and partial failures (one image fails) are isolated — the tool always returns whatever it managed to generate.
 
 ---
 
@@ -180,4 +180,4 @@ _GENERATORS = {
 }
 ```
 
-3. Set `IMAGE_PROVIDER=myprovider` at runtime.
+3. Agregar `myprovider` al `Literal` de `Provider` en `src/shared/llm_config/domain/models.py` y usarlo en `config/llm.*.json`.

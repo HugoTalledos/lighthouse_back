@@ -22,22 +22,40 @@ python3 -m pytest -v -k "test_tool_returns_dict_with_status"
 
 | Variable | Required | Description |
 |---|---|---|
-There are two independent provider axes: `LLM_PROVIDER` (text/JSON generation) and `IMAGE_PROVIDER` (image generation). Both accept only `openrouter` (default) or `ollama`.
-
-| Variable | Required | Description |
-|---|---|---|
-| `OPENROUTER_API_KEY` | Yes (when either provider is `openrouter`) | OpenRouter API key; shared by the LLM client and the image generator |
-| `LLM_PROVIDER` | No | `openrouter` (default) or `ollama` |
-| `OPENROUTER_MODEL` | No | Chat model in `vendor/model` form; defaults to `openai/gpt-4o` |
-| `OLLAMA_MODEL` | No (when `LLM_PROVIDER=ollama`) | Ollama chat model tag; defaults to `llama3.1` |
-| `IMAGE_PROVIDER` | No | `openrouter` (default) or `ollama` |
-| `OPENROUTER_IMAGE_MODEL` | No | Image-capable model; defaults to `google/gemini-2.5-flash-image-preview` |
+| `OPENROUTER_API_KEY` | Yes (cuando algún consumidor usa provider `openrouter` en `config/llm.*.json`) | OpenRouter API key; shared by the LLM client and the image generator |
 | `OLLAMA_BASE_URL` | No (when either provider is `ollama`) | Ollama server URL; defaults to `http://localhost:11434` |
-| `OLLAMA_IMAGE_MODEL` | No (when `IMAGE_PROVIDER=ollama`) | Ollama image model tag; defaults to `x/flux2-klein:4b` |
 | `FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket name, e.g. `my-project.appspot.com` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | Path to Firebase service account JSON; omit to use Application Default Credentials |
 | `API_KEY` | No | Si está seteada, `/chat` y `/projects` exigen el header `x-api-key`. Sin ella el API queda abierto |
 | `ALLOWED_ORIGINS` | No | Orígenes CORS separados por comas; default `*` |
+| `APP_ENV` | No | Selecciona `config/llm.{APP_ENV}.json`; default `dev` |
+
+## Configuración de LLM
+
+Provider, modelo y parámetros de cada consumidor viven en
+`config/llm.{APP_ENV}.json`, versionado en git. `APP_ENV` (default `dev`) elige el
+archivo. El JSON no contiene credenciales.
+
+```json
+{
+  "defaults": { "provider": "ollama", "model": "qwen2.5-coder:7b", "temperature": 0.5 },
+  "agent":    { "model": "qwen2.5-coder:7b", "max_tokens": 1000 },
+  "tools": {
+    "campaign_builder": { "provider": "openrouter", "model": "openai/gpt-4o" },
+    "landing_builder":  { "temperature": 0.9 },
+    "image_builder":    { "model": "x/flux2-klein:4b" }
+  }
+}
+```
+
+`agent` y cada entrada de `tools` heredan de `defaults` campo por campo; una tool
+ausente usa `defaults` tal cual. `provider` solo acepta `openrouter` u `ollama`.
+Las claves válidas de `tools` son `campaign_builder`, `landing_builder` e
+`image_builder`. El archivo se lee y valida **al arranque**
+(`src/shared/llm_config/loader.py`), así que un typo revienta al levantar el server.
+
+El bloque `agent` configura el modelo orquestador, que se construye con
+`ChatOllama` y por tanto debe declarar provider `ollama`.
 
 ## Architecture
 
@@ -61,8 +79,9 @@ image_builder_tool.py  # @tool entry point; builds the generator via src/shared/
 
 src/shared/
 ├── openrouter/credentials.py   # OpenRouterCredentials: env read once, shared by the LLM and image clients
-├── llm/                        # LLMClientPort + OpenRouter/Ollama clients; build_llm_client() ← LLM_PROVIDER
-└── image_gen/                  # ImageGeneratorPort + OpenRouter/Ollama generators; build_image_generator() ← IMAGE_PROVIDER
+├── llm_config/                 # AppLLMConfig + load_llm_config() ← config/llm.{APP_ENV}.json
+├── llm/                        # LLMClientPort + OpenRouter/Ollama clients; build_llm_client(settings)
+└── image_gen/                  # ImageGeneratorPort + OpenRouter/Ollama generators; build_image_generator(settings)
 ```
 
 The `ImageBuilderService.build()` method uses `asyncio.gather(return_exceptions=True)` to run all image generation in parallel and isolate failures — a single variant failing does not abort the whole job. The `status` field in the result is `"success"` / `"partial"` / `"failed"` depending on how many variants succeeded.
@@ -71,7 +90,7 @@ The `ImageBuilderService.build()` method uses `asyncio.gather(return_exceptions=
 
 1. Create `src/shared/image_gen/infrastructure/my_provider.py` implementing `ImageGeneratorPort`.
 2. Register it in the `_GENERATORS` dict in `src/shared/image_gen/factory.py`.
-3. Set `IMAGE_PROVIDER=myprovider` at runtime.
+3. Agregar `myprovider` al `Literal` de `Provider` en `src/shared/llm_config/domain/models.py` y usarlo en `config/llm.*.json`.
 
 ## HTTP API
 
@@ -109,5 +128,6 @@ Tests are under `tests/` and mirror the `src/` structure:
 - `tests/unit/application/` — service orchestration tests (mocks ports)
 - `tests/unit/infrastructure/` — adapter tests for image_builder's composer and storage, plus other tools' infrastructure adapters
 - `tests/unit/shared/` — shared LLM and image-generation modules: factory dispatch tests plus provider adapter tests (uses `pytest-httpx` to mock HTTP calls)
+- `tests/unit/shared/llm_config/` — carga y merge de la config de LLM, más validación de los `config/llm.*.json` reales del repo
 
 `pytest.ini` sets `asyncio_mode = auto`, so `async def test_*` functions work without decorators.

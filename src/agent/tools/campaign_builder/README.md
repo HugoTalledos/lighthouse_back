@@ -7,7 +7,7 @@ LangGraph tool that generates a Facebook Marketing API campaign configuration (C
 ## Requirements
 
 - Python 3.9+
-- An OpenRouter API key (or set `LLM_PROVIDER=ollama` to run against a local Ollama server)
+- An OpenRouter API key (or set provider `ollama` for this tool in `config/llm.{APP_ENV}.json` to run against a local Ollama server)
 
 ---
 
@@ -21,13 +21,13 @@ pip install -r requirements.txt
 
 ## Configuration
 
+Provider and model for this tool are set in `config/llm.{APP_ENV}.json` (see
+`CLAUDE.md`'s "Configuración de LLM" section), not via env vars.
+
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `LLM_PROVIDER` | No | `openrouter` | LLM backend: `openrouter` or `ollama` |
-| `OPENROUTER_API_KEY` | Yes (when `LLM_PROVIDER=openrouter`) | — | OpenRouter API key |
-| `OPENROUTER_MODEL` | No | `openai/gpt-4o` | Chat model to use, in OpenRouter `vendor/model` form |
-| `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server URL (when `LLM_PROVIDER=ollama`) |
-| `OLLAMA_MODEL` | No | `llama3.1` | Ollama model tag (when `LLM_PROVIDER=ollama`) |
+| `OPENROUTER_API_KEY` | Yes (when this tool's provider is `openrouter`) | — | OpenRouter API key |
+| `OLLAMA_BASE_URL` | No | `http://localhost:11434` | Ollama server URL (when this tool's provider is `ollama`) |
 
 ---
 
@@ -126,7 +126,7 @@ src/shared/llm/              # Provider-agnostic LLM kernel
 ├── infrastructure/
 │   ├── openrouter_client.py    # OpenRouter chat/completions via httpx (no SDK)
 │   └── ollama_local_client.py  # Local Ollama server via httpx
-└── factory.py               # build_llm_client() → LLMClientPort via LLM_PROVIDER
+└── factory.py               # build_llm_client(settings) → LLMClientPort per config/llm.{APP_ENV}.json
 ```
 
 ---
@@ -158,4 +158,4 @@ class MyProvider(LLMClientPort):
 
 2. Register it in `_CLIENTS` in `src/shared/llm/factory.py`.
 
-3. Set `LLM_PROVIDER=myprovider` at runtime.
+3. Agregar `myprovider` al `Literal` de `Provider` en `src/shared/llm_config/domain/models.py` y usarlo en `config/llm.*.json`.
