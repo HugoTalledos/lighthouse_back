@@ -36,6 +36,8 @@ There are two independent provider axes: `LLM_PROVIDER` (text/JSON generation) a
 | `OLLAMA_IMAGE_MODEL` | No (when `IMAGE_PROVIDER=ollama`) | Ollama image model tag; defaults to `x/flux2-klein:4b` |
 | `FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket name, e.g. `my-project.appspot.com` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | Path to Firebase service account JSON; omit to use Application Default Credentials |
+| `API_KEY` | No | Si está seteada, `/chat` y `/projects` exigen el header `x-api-key`. Sin ella el API queda abierto |
+| `ALLOWED_ORIGINS` | No | Orígenes CORS separados por comas; default `*` |
 
 ## Architecture
 
@@ -64,6 +66,25 @@ src/shared/
 ```
 
 The `ImageBuilderService.build()` method uses `asyncio.gather(return_exceptions=True)` to run all image generation in parallel and isolate failures — a single variant failing does not abort the whole job. The `status` field in the result is `"success"` / `"partial"` / `"failed"` depending on how many variants succeeded.
+
+## HTTP API
+
+`src/main.py` es el composition root: monta `POST /chat` (SSE) y las rutas de
+`/projects`, con CORS y auth por API key.
+
+```bash
+uvicorn src.main:app --reload --workers 1
+```
+
+`POST /chat` recibe `{"message": str, "thread_id": str | null}` y responde
+`text/event-stream` con eventos `start`, `message`, `tool_call`, `tool_result`,
+`done` y `error`. Si `thread_id` viene vacío el API genera uno y lo devuelve en
+el evento `start`; el cliente debe reenviarlo en los siguientes turnos.
+
+**El checkpointer es `MemorySaver` (en memoria), así que el API debe correr con
+un solo worker.** Con varios workers, dos turnos de la misma conversación pueden
+aterrizar en procesos distintos y perder el contexto. El historial también se
+pierde al reiniciar.
 
 ### Adding a new image provider
 
