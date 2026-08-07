@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 
 import pytest
 from pytest_httpx import HTTPXMock
@@ -43,6 +44,7 @@ async def test_generate_returns_generated_image_and_sends_auth_header(monkeypatc
 
     request = httpx_mock.get_request()
     assert request.headers["Authorization"] == "Bearer sk-test"
+    assert json.loads(request.content)["model"] == "google/gemini-2.5-flash-image-preview"
 
 
 async def test_missing_api_key_raises_at_construction(monkeypatch):
