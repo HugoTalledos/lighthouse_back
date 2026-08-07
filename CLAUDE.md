@@ -67,6 +67,12 @@ src/shared/
 
 The `ImageBuilderService.build()` method uses `asyncio.gather(return_exceptions=True)` to run all image generation in parallel and isolate failures — a single variant failing does not abort the whole job. The `status` field in the result is `"success"` / `"partial"` / `"failed"` depending on how many variants succeeded.
 
+### Adding a new image provider
+
+1. Create `src/shared/image_gen/infrastructure/my_provider.py` implementing `ImageGeneratorPort`.
+2. Register it in the `_GENERATORS` dict in `src/shared/image_gen/factory.py`.
+3. Set `IMAGE_PROVIDER=myprovider` at runtime.
+
 ## HTTP API
 
 `src/main.py` es el composition root: monta `POST /chat` (SSE) y las rutas de
@@ -85,12 +91,6 @@ el evento `start`; el cliente debe reenviarlo en los siguientes turnos.
 un solo worker.** Con varios workers, dos turnos de la misma conversación pueden
 aterrizar en procesos distintos y perder el contexto. El historial también se
 pierde al reiniciar.
-
-### Adding a new image provider
-
-1. Create `src/shared/image_gen/infrastructure/my_provider.py` implementing `ImageGeneratorPort`.
-2. Register it in the `_GENERATORS` dict in `src/shared/image_gen/factory.py`.
-3. Set `IMAGE_PROVIDER=myprovider` at runtime.
 
 ## Testing
 
