@@ -5,7 +5,8 @@
     "temperature": 0.5
   },
   "agent": {
-    "model": "openai/gpt-4o",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:7b",
     "temperature": 0.5,
     "max_tokens": 1000,
     "top_p": 1.0

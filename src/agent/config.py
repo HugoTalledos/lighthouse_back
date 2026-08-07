@@ -1,8 +1,8 @@
 from dotenv import load_dotenv
-from langchain.chat_models import init_chat_model
 from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 
+from src.shared.llm_config.loader import load_llm_config
 from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
 from src.agent.tools.campaign_builder.approve_campaign_tool import approve_campaign_tool
 from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
@@ -24,13 +24,19 @@ tools = [
     promote_landing_tool,
 ]
 
+_agent_settings = load_llm_config().for_agent()
+
+if _agent_settings.provider != "ollama":
+    raise ValueError(
+        f"El modelo orquestador solo soporta provider 'ollama' por ahora, "
+        f"pero config/llm.*.json declara {_agent_settings.provider!r} en 'agent'."
+    )
+
 model = ChatOllama(
-    model="qwen2.5-coder:7b",
-    temperature=0.5,
-    max_tokens=1000,
-    top_p=1.0,
-    frequency_penalty=0.0,
-    presence_penalty=0.0,
+    model=_agent_settings.model,
+    temperature=_agent_settings.temperature,
+    max_tokens=_agent_settings.max_tokens,
+    top_p=_agent_settings.top_p,
 ).bind_tools(tools)
 
 

@@ -5,6 +5,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from src.shared.llm.factory import build_llm_client
+from src.shared.llm_config.loader import load_llm_config
 from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 from .domain.models import LandingBrief
 from .application.landing_builder_service import LandingBuilderService
@@ -19,7 +20,7 @@ def _build_service() -> LandingBuilderService:
         raise ValueError("LANDING_TEMPLATE_REPO environment variable is not set")
     template_ref = os.getenv("LANDING_TEMPLATE_REF", "main")
 
-    llm = build_llm_client()
+    llm = build_llm_client(load_llm_config().for_tool("landing_builder"))
     return LandingBuilderService(
         llm, GithubTemplateFetcher(), AstroNodeBuilder(), FirebaseHostingDeployer(),
         template_repo=template_repo, template_ref=template_ref,

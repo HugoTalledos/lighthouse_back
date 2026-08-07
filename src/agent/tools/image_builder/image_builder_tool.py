@@ -4,6 +4,7 @@ from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
 from src.shared.image_gen.factory import build_image_generator
+from src.shared.llm_config.loader import load_llm_config
 from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 from .domain.models import ImageBrief
 from .application.image_builder_service import ImageBuilderService
@@ -13,7 +14,7 @@ from .infrastructure.storage.firebase_storage import FirebaseStorageAdapter
 
 def _build_service() -> ImageBuilderService:
     return ImageBuilderService(
-        build_image_generator(),
+        build_image_generator(load_llm_config().for_tool("image_builder")),
         PillowImageComposer(),
         FirebaseStorageAdapter(),
     )

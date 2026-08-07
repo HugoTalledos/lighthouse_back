@@ -71,10 +71,25 @@ async def test_tool_raises_on_invalid_brief():
         })
 
 
-def test_build_service_selects_openrouter_by_default(monkeypatch):
-    monkeypatch.delenv("IMAGE_PROVIDER", raising=False)
+def _config_with_image_builder(provider: str, model: str):
+    from src.shared.llm_config.domain.models import AppLLMConfig
+
+    return AppLLMConfig.model_validate(
+        {
+            "defaults": {"provider": provider, "model": model, "temperature": 0.5},
+            "agent": {},
+            "tools": {"image_builder": {}},
+        }
+    )
+
+
+def test_build_service_selects_openrouter_when_configured(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
     monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
+    monkeypatch.setattr(
+        "src.agent.tools.image_builder.image_builder_tool.load_llm_config",
+        lambda: _config_with_image_builder("openrouter", "google/gemini-2.5-flash-image-preview"),
+    )
 
     with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
@@ -84,11 +99,15 @@ def test_build_service_selects_openrouter_by_default(monkeypatch):
         )
         service = _build_service()
         assert isinstance(service._generator, OpenRouterImageGenerator)
+        assert service._generator._model == "google/gemini-2.5-flash-image-preview"
 
 
-def test_build_service_selects_ollama(monkeypatch):
-    monkeypatch.setenv("IMAGE_PROVIDER", "ollama")
+def test_build_service_selects_ollama_when_configured(monkeypatch):
     monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
+    monkeypatch.setattr(
+        "src.agent.tools.image_builder.image_builder_tool.load_llm_config",
+        lambda: _config_with_image_builder("ollama", "x/flux2-klein:4b"),
+    )
 
     with patch("src.agent.tools.image_builder.infrastructure.storage.firebase_storage.firebase_admin") as m:
         m._apps = {"[DEFAULT]": True}
@@ -98,16 +117,22 @@ def test_build_service_selects_ollama(monkeypatch):
         )
         service = _build_service()
         assert isinstance(service._generator, OllamaImageGenerator)
+        assert service._generator._model == "x/flux2-klein:4b"
 
 
-@pytest.mark.parametrize("provider", ["dalle3", "vertex"])
-def test_build_service_rejects_removed_providers(monkeypatch, provider):
-    monkeypatch.setenv("IMAGE_PROVIDER", provider)
-    monkeypatch.setenv("FIREBASE_STORAGE_BUCKET", "test.appspot.com")
+def test_config_rejects_unknown_providers_at_validation_time():
+    """La validación ahora vive en el Literal de LLMSettings, no en la factory."""
+    from pydantic import ValidationError
+    from src.shared.llm_config.domain.models import AppLLMConfig
 
-    from src.agent.tools.image_builder.image_builder_tool import _build_service
-    with pytest.raises(ValueError, match="Unknown IMAGE_PROVIDER"):
-        _build_service()
+    with pytest.raises(ValidationError):
+        AppLLMConfig.model_validate(
+            {
+                "defaults": {"provider": "dalle3", "model": "x", "temperature": 0.5},
+                "agent": {},
+                "tools": {},
+            }
+        )
 
 
 async def test_tool_omits_image_bytes_and_survives_real_binary(monkeypatch):

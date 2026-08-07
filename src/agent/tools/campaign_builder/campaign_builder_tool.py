@@ -6,6 +6,7 @@ from langgraph.prebuilt import InjectedState
 from .domain.models import CampaignBrief
 from .application.campaign_builder_service import CampaignBuilderService
 from src.shared.llm.factory import build_llm_client
+from src.shared.llm_config.loader import load_llm_config
 from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 
 
@@ -19,7 +20,7 @@ async def campaign_builder_tool(brief_dict: dict, state: Annotated[dict, Injecte
     Output: serialized CampaignConfigResult dict.
     """
     brief = CampaignBrief.model_validate({**brief_dict, "project_id": state["project_id"]})
-    llm = build_llm_client()
+    llm = build_llm_client(load_llm_config().for_tool("campaign_builder"))
     service = CampaignBuilderService(llm)
     result = await service.build(brief)
     get_project_repository().upsert_summary(
