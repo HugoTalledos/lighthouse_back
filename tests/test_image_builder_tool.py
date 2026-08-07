@@ -7,6 +7,7 @@ from PIL import Image
 from src.agent.tools.image_builder.domain.models import (
     ImageBrief, GeneratedImage, ComposedCreative, ImageBuildResult,
 )
+from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
 
 
 def _valid_brief_dict():
@@ -107,3 +108,46 @@ def test_build_service_rejects_removed_providers(monkeypatch, provider):
     from src.agent.tools.image_builder.image_builder_tool import _build_service
     with pytest.raises(ValueError, match="Unknown IMAGE_PROVIDER"):
         _build_service()
+
+
+async def test_tool_omits_image_bytes_and_survives_real_binary(monkeypatch):
+    from src.agent.tools.image_builder.domain.models import (
+        ImageBrief, ComposedCreative, ImageBuildResult,
+    )
+    import json
+
+    brief = ImageBrief(
+        project_id="p1", business_name="Café Luna", value_proposition="Café de origen",
+        target_customer="oficinistas", headline="Café de origen", cta_text="Pide el tuyo",
+        style_hints=["minimalista"], n_images=1,
+    )
+    result = ImageBuildResult(
+        brief=brief,
+        creatives=[ComposedCreative(
+            variant_index=0,
+            image_bytes=b"\x89PNG\r\n\x1a\n\xff\xfe",  # PNG real: no es UTF-8 válido
+            storage_url="https://storage.googleapis.com/bucket/p1/0.png",
+            headline="Café de origen", cta_text="Pide el tuyo",
+            prompt_used="prompt", provider="openrouter",
+        )],
+        status="success", errors=[],
+    )
+
+    service = MagicMock()
+    service.build = AsyncMock(return_value=result)
+    monkeypatch.setattr(
+        "src.agent.tools.image_builder.image_builder_tool._build_service", lambda: service
+    )
+    monkeypatch.setattr(
+        "src.agent.tools.image_builder.image_builder_tool.get_project_repository",
+        lambda: MagicMock(),
+    )
+
+    output = await image_builder_tool.ainvoke({
+        "brief_dict": brief.model_dump(exclude={"project_id"}),
+        "state": {"project_id": "p1"},
+    })
+
+    assert "image_bytes" not in output["creatives"][0]
+    assert output["creatives"][0]["storage_url"].endswith("/0.png")
+    json.dumps(output)  # el resultado debe ser serializable a JSON
