@@ -38,7 +38,7 @@ async def image_builder_tool(brief_dict: dict, state: Annotated[dict, InjectedSt
     repository.upsert_summary(
         brief.project_id, brief.business_name, brief.value_proposition
     )
-    if result.status == "success":
+    if result.status != "failed" and serialized_result["creatives"]:
         repository.update_resource(
             brief.project_id,
             "images",
