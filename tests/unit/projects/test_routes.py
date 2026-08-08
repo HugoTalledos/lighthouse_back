@@ -53,6 +53,23 @@ def test_create_project_generates_project_id_and_starts_in_progress():
     assert body["business_name"] is None
     assert body["value_proposition"] is None
     assert body["status"] == "in_progress"
+    assert set(body) == {
+        "project_id",
+        "thread_ids",
+        "business_name",
+        "value_proposition",
+        "created_at",
+        "updated_at",
+        "status",
+        "resources",
+    }
+    assert datetime.fromisoformat(body["created_at"])
+    assert datetime.fromisoformat(body["updated_at"])
+    assert body["resources"] == {
+        "landing": {"status": "pending", "payload": {}},
+        "campaign": {"status": "pending", "payload": {}},
+        "images": {"status": "pending", "payload": {}},
+    }
 
 
 def test_create_project_is_idempotent_for_an_existing_thread():
@@ -78,5 +95,15 @@ def test_create_project_rejects_a_thread_id_over_the_existing_limit():
     client = TestClient(create_app(repo=InMemoryProjectRepository(), graph=FakeGraph()))
 
     response = client.post("/projects", json={"thread_id": "a" * 201})
+
+    assert response.status_code == 422
+
+
+def test_create_project_rejects_fields_other_than_thread_id():
+    client = TestClient(create_app(repo=InMemoryProjectRepository(), graph=FakeGraph()))
+
+    response = client.post(
+        "/projects", json={"thread_id": "thread-1", "status": "approved"}
+    )
 
     assert response.status_code == 422

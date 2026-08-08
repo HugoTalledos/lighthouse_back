@@ -1,11 +1,13 @@
 from __future__ import annotations
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ...domain.ports import ProjectRepositoryPort
 
 
 class CreateProjectRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     thread_id: str = Field(min_length=1, max_length=200)
 
     @field_validator("thread_id")

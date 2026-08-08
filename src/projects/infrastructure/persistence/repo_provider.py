@@ -18,9 +18,9 @@ class _LazyProjectRepository:
 
     def create_for_thread(self, thread_id: str):
         repo = self._get()
+        if thread_id in self._ephemeral_by_thread:
+            return self._ephemeral_by_thread[thread_id]
         if repo is None:
-            if thread_id in self._ephemeral_by_thread:
-                return self._ephemeral_by_thread[thread_id]
             from datetime import datetime, timezone
             import uuid
             from ...domain.models import Project
