@@ -6,8 +6,9 @@ from pathlib import Path
 import firebase_admin
 from firebase_admin import firestore
 
-from ...domain.models import Project, ResourceKind, ApprovalStatus
+from ...domain.models import Project, ResourceKind, ResourceState, ApprovalStatus
 from ...domain.ports import ProjectRepositoryPort
+from ...domain.status import REQUIRED_RESOURCES, derive_project_status
 from .outbox import LocalOutbox
 
 
@@ -132,9 +133,23 @@ class FirestoreProjectRepository(ProjectRepositoryPort):
 
     def _write_resource(self, project_id: str, args: dict) -> None:
         resource = args["resource"]
-        self._collection.document(project_id).update({
+        document = self._collection.document(project_id)
+        project_data = document.get().to_dict() or {}
+        stored_resources = project_data.get("resources", {})
+        if not isinstance(stored_resources, dict):
+            stored_resources = {}
+        resources = {
+            kind: ResourceState.model_validate(stored_resources.get(kind, {}))
+            for kind in REQUIRED_RESOURCES
+        }
+        resources[resource] = ResourceState(
+            status=args["status"], payload=args["payload"]
+        )
+
+        document.update({
             f"resources.{resource}.status": args["status"],
             f"resources.{resource}.payload": args["payload"],
+            "status": derive_project_status(resources),
             "updated_at": datetime.now(timezone.utc),
         })
 
