@@ -1,8 +1,19 @@
 import pytest
 from pydantic import ValidationError
+from datetime import datetime, timezone
+from src.projects.domain.models import Project
 from src.agent.tools.image_builder.domain.models import (
     ImageBrief, GeneratedImage, ComposedCreative, ImageBuildResult,
 )
+
+
+def test_new_project_starts_in_progress():
+    project = Project(
+        project_id="p-1", thread_ids=["t-1"],
+        created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc),
+    )
+
+    assert project.status == "in_progress"
 
 
 def _valid_brief(**overrides):

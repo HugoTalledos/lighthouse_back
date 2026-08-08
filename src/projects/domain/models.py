@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 ResourceKind = Literal["landing", "campaign", "images"]
 ApprovalStatus = Literal["pending", "approved"]
+ProjectStatus = Literal["in_progress", "review", "approved"]
 
 
 class ResourceState(BaseModel):
@@ -19,6 +20,7 @@ class Project(BaseModel):
     value_proposition: str | None = None
     created_at: datetime
     updated_at: datetime
+    status: ProjectStatus = "in_progress"
     resources: dict[ResourceKind, ResourceState] = Field(
         default_factory=lambda: {
             "landing": ResourceState(),
