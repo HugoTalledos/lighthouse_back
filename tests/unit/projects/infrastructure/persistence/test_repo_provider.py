@@ -50,6 +50,17 @@ def test_create_for_thread_is_idempotent_when_construction_fails():
     assert second.project_id == first.project_id
 
 
+def test_get_returns_ephemeral_project_created_during_an_outage():
+    provider = _LazyProjectRepository()
+    with patch(
+        "src.projects.infrastructure.persistence.repo_provider.FirestoreProjectRepository",
+        side_effect=RuntimeError("no credentials"),
+    ):
+        created = provider.create_for_thread("t1")
+
+    assert provider.get(created.project_id) == created
+
+
 def test_create_for_thread_keeps_ephemeral_project_when_firestore_recovers():
     provider = _LazyProjectRepository()
     recovered_repository = RecoveredProjectRepository()

@@ -43,7 +43,9 @@ def _tool_events(payload: dict) -> list[ChatEvent]:
     return events
 
 
-async def stream_chat(graph, message: str, thread_id: str) -> AsyncIterator[ChatEvent]:
+async def stream_chat(
+    graph, message: str, project_id: str, thread_id: str
+) -> AsyncIterator[ChatEvent]:
     """Corre un turno del agente y emite los eventos del chat en orden.
 
     Siempre empieza con `start` y termina con `done`, incluso si el turno falla:
@@ -51,12 +53,15 @@ async def stream_chat(graph, message: str, thread_id: str) -> AsyncIterator[Chat
     status code, así que el fallo viaja como evento `error`.
     """
     yield start_event(thread_id)
-    project_id: str | None = None
     stream = None
 
     try:
         stream = graph.astream(
-            {"messages": [{"role": "user", "content": message}], "thread_id": thread_id},
+            {
+                "messages": [{"role": "user", "content": message}],
+                "thread_id": thread_id,
+                "project_id": project_id,
+            },
             config={"configurable": {"thread_id": thread_id}},
             stream_mode="updates",
         )
@@ -64,7 +69,6 @@ async def stream_chat(graph, message: str, thread_id: str) -> AsyncIterator[Chat
             for node, payload in update.items():
                 if not isinstance(payload, dict):
                     continue
-                project_id = payload.get("project_id") or project_id
                 events = _tool_events(payload) if node == "tools" else _chatbot_events(payload)
                 for event in events:
                     yield event

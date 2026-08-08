@@ -4,16 +4,13 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from src.agent.config import tools, memory, model
 from src.agent.state import State
 from src.agent.utils.prompt import CHATBOT_SYSTEM_PROMPT
-from src.projects.infrastructure.persistence.repo_provider import get_project_repository
 
 
 def build_graph() -> StateGraph:
     graph_bulder = StateGraph(State)
 
     def chatbot(state: State):
-        project_id = state.get("project_id")
-        if not project_id:
-            project_id = get_project_repository().get_or_create_by_thread(state["thread_id"]).project_id
+        project_id = state["project_id"]
 
         message = model.invoke([
             SystemMessage(content=CHATBOT_SYSTEM_PROMPT),

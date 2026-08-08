@@ -1,7 +1,6 @@
 from __future__ import annotations
-import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -11,7 +10,8 @@ from .sse import format_event
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=8000)
-    thread_id: str | None = Field(default=None, max_length=200)
+    project_id: str = Field(max_length=200)
+    thread_id: str = Field(max_length=200)
 
     @field_validator("message")
     @classmethod
@@ -21,17 +21,23 @@ class ChatRequest(BaseModel):
         return v
 
 
-def build_chat_router(graph) -> APIRouter:
+def build_chat_router(graph, repo) -> APIRouter:
     """Construye el router con el endpoint `POST /chat` que transmite la
     conversación como Server-Sent Events."""
     router = APIRouter()
 
     @router.post("/chat")
     async def chat(request: ChatRequest) -> StreamingResponse:
-        thread_id = request.thread_id or str(uuid.uuid4())
+        project = repo.get(request.project_id)
+        if project is None:
+            raise HTTPException(status_code=404, detail="project not found")
+        if request.thread_id not in project.thread_ids:
+            raise HTTPException(status_code=409, detail="thread does not belong to project")
 
         async def wire():
-            async for event in stream_chat(graph, request.message, thread_id):
+            async for event in stream_chat(
+                graph, request.message, request.project_id, request.thread_id
+            ):
                 yield format_event(event)
 
         return StreamingResponse(

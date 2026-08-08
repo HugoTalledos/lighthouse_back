@@ -26,8 +26,8 @@ class FakeGraph:
         return gen()
 
 
-async def _collect(graph, message="hola", thread_id="t-1"):
-    return [event async for event in stream_chat(graph, message, thread_id)]
+async def _collect(graph, message="hola", project_id="p-1", thread_id="t-1"):
+    return [event async for event in stream_chat(graph, message, project_id, thread_id)]
 
 
 async def test_plain_answer_emits_start_message_done():
@@ -41,16 +41,17 @@ async def test_plain_answer_emits_start_message_done():
     assert [e.event for e in events] == ["start", "message", "done"]
     assert events[0].data == {"thread_id": "t-1"}
     assert events[1].data == {"content": "hola, ¿en qué te ayudo?"}
-    assert events[2].data == {"thread_id": "t-1", "project_id": "p1"}
+    assert events[2].data == {"thread_id": "t-1", "project_id": "p-1"}
 
 
 async def test_passes_thread_id_to_graph_config():
     graph = FakeGraph([])
 
-    await _collect(graph, message="quiero anuncios", thread_id="abc")
+    await _collect(graph, message="quiero anuncios", project_id="project-abc", thread_id="abc")
 
     assert graph.config == {"configurable": {"thread_id": "abc"}}
     assert graph.state["thread_id"] == "abc"
+    assert graph.state["project_id"] == "project-abc"
     assert graph.state["messages"] == [{"role": "user", "content": "quiero anuncios"}]
 
 
@@ -118,7 +119,7 @@ async def test_graph_exception_emits_error_then_done():
     assert events[2].event == "error"
     assert "llm unreachable" not in json.dumps(events[2].data)
     assert events[2].data["message"] == "El turno falló por un error interno. Intenta de nuevo."
-    assert events[3].data["project_id"] == "p1"
+    assert events[3].data["project_id"] == "p-1"
 
 
 async def test_multiple_tool_calls_in_one_ai_message_emit_one_event_each():

@@ -36,6 +36,20 @@ class _LazyProjectRepository:
     def get_or_create_by_thread(self, thread_id: str):
         return self.create_for_thread(thread_id)
 
+    def get(self, project_id: str):
+        ephemeral = next(
+            (
+                project
+                for project in self._ephemeral_by_thread.values()
+                if project.project_id == project_id
+            ),
+            None,
+        )
+        if ephemeral is not None:
+            return ephemeral
+        repo = self._get()
+        return None if repo is None else repo.get(project_id)
+
     def upsert_summary(self, project_id: str, business_name: str, value_proposition: str) -> None:
         repo = self._get()
         if repo is None:

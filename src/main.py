@@ -38,9 +38,12 @@ def create_app(repo=None, graph=None) -> FastAPI:
     )
 
     protected = [Depends(require_api_key)]
-    app.include_router(build_chat_router(graph or build_graph()), dependencies=protected)
+    project_repo = repo or get_project_repository()
     app.include_router(
-        build_router(repo or get_project_repository()), dependencies=protected
+        build_chat_router(graph or build_graph(), project_repo), dependencies=protected
+    )
+    app.include_router(
+        build_router(project_repo), dependencies=protected
     )
     return app
 
