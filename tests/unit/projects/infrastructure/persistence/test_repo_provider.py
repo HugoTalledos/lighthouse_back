@@ -24,6 +24,18 @@ def test_get_or_create_by_thread_falls_back_to_ephemeral_project_when_constructi
     assert project.project_id
 
 
+def test_create_for_thread_is_idempotent_when_construction_fails():
+    provider = _LazyProjectRepository()
+    with patch(
+        "src.projects.infrastructure.persistence.repo_provider.FirestoreProjectRepository",
+        side_effect=RuntimeError("no credentials"),
+    ):
+        first = provider.create_for_thread("t1")
+        second = provider.create_for_thread("t1")
+
+    assert second.project_id == first.project_id
+
+
 def test_upsert_summary_is_noop_when_construction_fails():
     provider = _LazyProjectRepository()
     with patch(

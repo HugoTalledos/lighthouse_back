@@ -6,6 +6,7 @@ from ...domain.ports import ProjectRepositoryPort
 class _LazyProjectRepository:
     def __init__(self) -> None:
         self._instance: ProjectRepositoryPort | None = None
+        self._ephemeral_by_thread = {}
 
     def _get(self) -> ProjectRepositoryPort | None:
         if self._instance is None:
@@ -15,15 +16,25 @@ class _LazyProjectRepository:
                 return None
         return self._instance
 
-    def get_or_create_by_thread(self, thread_id: str):
+    def create_for_thread(self, thread_id: str):
         repo = self._get()
         if repo is None:
+            if thread_id in self._ephemeral_by_thread:
+                return self._ephemeral_by_thread[thread_id]
             from datetime import datetime, timezone
             import uuid
             from ...domain.models import Project
             now = datetime.now(timezone.utc)
-            return Project(project_id=str(uuid.uuid4()), thread_ids=[thread_id], created_at=now, updated_at=now)
-        return repo.get_or_create_by_thread(thread_id)
+            project = Project(
+                project_id=str(uuid.uuid4()), thread_ids=[thread_id],
+                created_at=now, updated_at=now,
+            )
+            self._ephemeral_by_thread[thread_id] = project
+            return project
+        return repo.create_for_thread(thread_id)
+
+    def get_or_create_by_thread(self, thread_id: str):
+        return self.create_for_thread(thread_id)
 
     def upsert_summary(self, project_id: str, business_name: str, value_proposition: str) -> None:
         repo = self._get()

@@ -33,6 +33,20 @@ def test_get_or_create_by_thread_returns_existing_project(repo):
     repo._collection.document.assert_not_called()
 
 
+def test_create_for_thread_returns_existing_project(repo):
+    now = datetime.now(timezone.utc)
+    existing_doc = MagicMock()
+    existing_doc.to_dict.return_value = Project(
+        project_id="p1", thread_ids=["t1"], created_at=now, updated_at=now,
+    ).model_dump(mode="json")
+    repo._collection.where.return_value.limit.return_value.stream.return_value = [existing_doc]
+
+    project = repo.create_for_thread("t1")
+
+    assert project.project_id == "p1"
+    repo._collection.document.assert_not_called()
+
+
 def test_get_or_create_by_thread_creates_new_project_when_none_exists(repo):
     repo._collection.where.return_value.limit.return_value.stream.return_value = []
     repo._db.transaction.return_value = MagicMock()

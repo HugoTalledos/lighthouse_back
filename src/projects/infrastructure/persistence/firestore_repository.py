@@ -20,7 +20,7 @@ class FirestoreProjectRepository(ProjectRepositoryPort):
         self._outbox = outbox or LocalOutbox(root=outbox_root)
         self._pending_by_thread: dict[str, Project] = {}
 
-    def get_or_create_by_thread(self, thread_id: str) -> Project:
+    def create_for_thread(self, thread_id: str) -> Project:
         if thread_id in self._pending_by_thread:
             return self._pending_by_thread[thread_id]
 
@@ -76,6 +76,9 @@ class FirestoreProjectRepository(ProjectRepositoryPort):
             self._outbox.enqueue(project_id, "create_project", project.model_dump(mode="json"))
             self._pending_by_thread[thread_id] = project
             return project
+
+    def get_or_create_by_thread(self, thread_id: str) -> Project:
+        return self.create_for_thread(thread_id)
 
     def get(self, project_id: str) -> Project | None:
         doc = self._collection.document(project_id).get()

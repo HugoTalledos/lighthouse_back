@@ -5,8 +5,11 @@ from .models import Project, ResourceKind, ApprovalStatus
 
 class ProjectRepositoryPort(ABC):
     @abstractmethod
-    def get_or_create_by_thread(self, thread_id: str) -> Project:
+    def create_for_thread(self, thread_id: str) -> Project:
         ...
+
+    def get_or_create_by_thread(self, thread_id: str) -> Project:
+        return self.create_for_thread(thread_id)
 
     @abstractmethod
     def get(self, project_id: str) -> Project | None:
