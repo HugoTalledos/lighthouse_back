@@ -81,6 +81,16 @@ class FirestoreProjectRepository(ProjectRepositoryPort):
         return self.create_for_thread(thread_id)
 
     def get(self, project_id: str) -> Project | None:
+        pending = next(
+            (
+                project
+                for project in self._pending_by_thread.values()
+                if project.project_id == project_id
+            ),
+            None,
+        )
+        if pending is not None:
+            return pending
         doc = self._collection.document(project_id).get()
         if not doc.exists:
             return None

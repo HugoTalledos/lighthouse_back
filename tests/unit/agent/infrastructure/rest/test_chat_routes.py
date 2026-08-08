@@ -1,10 +1,13 @@
 from __future__ import annotations
 from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage
 from src.agent.infrastructure.rest.chat_routes import build_chat_router
 from src.projects.domain.models import Project
+from src.projects.infrastructure.persistence.firestore_repository import FirestoreProjectRepository
+from src.main import create_app
 
 
 class FakeGraph:
@@ -93,3 +96,28 @@ def test_chat_rejects_thread_id_over_max_length():
     )
 
     assert response.status_code == 422
+
+
+def test_chat_streams_for_project_pending_after_firestore_write_failure(monkeypatch, tmp_path):
+    monkeypatch.delenv("API_KEY", raising=False)
+    with patch(
+        "src.projects.infrastructure.persistence.firestore_repository.firebase_admin"
+    ) as firebase, patch(
+        "src.projects.infrastructure.persistence.firestore_repository.firestore"
+    ) as firestore:
+        firebase._apps = {"[DEFAULT]": True}
+        db = MagicMock()
+        firestore.client.return_value = db
+        repo = FirestoreProjectRepository(outbox_root=str(tmp_path))
+        repo._collection = db.collection.return_value
+        repo._collection.where.side_effect = RuntimeError("firestore unavailable")
+        repo._collection.document.return_value.get.return_value.exists = False
+        project = repo.create_for_thread("t-1")
+
+        response = TestClient(create_app(repo=repo, graph=FakeGraph())).post(
+            "/chat",
+            json={"project_id": project.project_id, "thread_id": "t-1", "message": "hola"},
+        )
+
+    assert response.status_code == 200
+    assert 'event: start\ndata: {"thread_id": "t-1"}' in response.text
