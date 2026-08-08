@@ -62,3 +62,14 @@ def test_guard_passes_and_model_uses_resolved_agent_settings(reload_config_modul
     assert bound_model.model == "qwen2.5-coder:7b"
     assert bound_model.temperature == 0.2
     assert bound_model.top_p == 0.8
+
+
+def test_metadata_tool_is_registered_before_builder_tools(reload_config_module):
+    reloaded = reload_config_module(_config_with_agent())
+
+    tool_names = [registered_tool.name for registered_tool in reloaded.tools]
+
+    assert tool_names[0] == "update_project_metadata_tool"
+    assert tool_names.index("update_project_metadata_tool") < tool_names.index(
+        "image_builder_tool"
+    )

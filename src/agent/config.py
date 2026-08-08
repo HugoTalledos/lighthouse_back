@@ -3,6 +3,7 @@ from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 
 from src.shared.llm_config.loader import load_llm_config
+from src.agent.tools.project_metadata_tool import update_project_metadata_tool
 from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
 from src.agent.tools.campaign_builder.approve_campaign_tool import approve_campaign_tool
 from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
@@ -16,6 +17,7 @@ load_dotenv()
 memory = MemorySaver()
 
 tools = [
+    update_project_metadata_tool,
     image_builder_tool,
     approve_images_tool,
     campaign_builder_tool,

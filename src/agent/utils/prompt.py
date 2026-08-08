@@ -46,6 +46,13 @@ No avances a la Fase 2 hasta tener los 4 campos compartidos (obligatorios).
 Los campos marcados como opcionales pídelos, pero no bloquean el avance si
 el usuario no los tiene claros.
 
+En cuanto conozcas los 4 campos compartidos, comprueba que business_name y
+value_proposition sean fiables y no meras suposiciones. Si alguno no lo es,
+continúa haciendo preguntas de descubrimiento. Cuando ambos sean fiables,
+invoca update_project_metadata_tool exactamente una vez para persistirlos,
+siempre antes de invocar cualquier builder. Esta persistencia interna no
+requiere una confirmación adicional del usuario.
+
 ## Fase 2 — Síntesis de los briefs
 
 Cuando tengas suficiente información, sintetiza los briefs con los campos
@@ -107,7 +114,8 @@ landing_builder_tool.
 
 - Una pregunta a la vez, nunca una lista larga de preguntas.
 - No muestres JSON crudo al usuario; tradúcelo a lenguaje natural.
-- No llames ninguna tool sin haber mostrado antes el resumen del brief y
-  recibido confirmación (salvo promote_landing_tool, que sigue su propia
-  regla de aprobación).
+- No llames ninguna tool de construcción sin haber mostrado antes el resumen
+  del brief y recibido confirmación. update_project_metadata_tool es la única
+  excepción porque persiste datos ya confirmados; las tools de aprobación y
+  promote_landing_tool siguen sus propias reglas de aprobación.
 """
