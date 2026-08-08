@@ -23,7 +23,15 @@ async def campaign_builder_tool(brief_dict: dict, state: Annotated[dict, Injecte
     llm = build_llm_client(load_llm_config().for_tool("campaign_builder"))
     service = CampaignBuilderService(llm)
     result = await service.build(brief)
-    get_project_repository().upsert_summary(
+    repository = get_project_repository()
+    repository.upsert_summary(
         brief.project_id, brief.business_name, brief.value_proposition
     )
+    if result.status == "success" and result.campaign is not None:
+        repository.update_resource(
+            brief.project_id,
+            "campaign",
+            {"config": result.campaign.model_dump(mode="json")},
+            "pending",
+        )
     return result.model_dump(mode="json")

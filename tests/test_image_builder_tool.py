@@ -44,10 +44,12 @@ async def test_tool_returns_dict_with_status(monkeypatch):
         "src.agent.tools.image_builder.image_builder_tool._build_service"
     ) as mock_factory, patch(
         "src.agent.tools.image_builder.image_builder_tool.get_project_repository"
-    ):
+    ) as mock_get_repo:
         mock_service = MagicMock()
         mock_service.build = AsyncMock(return_value=stub_result)
         mock_factory.return_value = mock_service
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
 
         from src.agent.tools.image_builder.image_builder_tool import image_builder_tool
         brief_without_project_id = {k: v for k, v in _valid_brief_dict().items() if k != "project_id"}
@@ -58,6 +60,53 @@ async def test_tool_returns_dict_with_status(monkeypatch):
 
     assert result["status"] == "success"
     assert len(result["creatives"]) == 1
+    mock_repo.update_resource.assert_called_once_with(
+        "proj-1",
+        "images",
+        {
+            "creatives": [
+                {
+                    "variant_index": 0,
+                    "storage_url": "https://example.com/img.png",
+                    "headline": "Save time",
+                    "cta_text": "Try free",
+                    "prompt_used": "prompt",
+                    "provider": "openrouter",
+                }
+            ]
+        },
+        "pending",
+    )
+
+
+async def test_failed_tool_result_does_not_persist_an_image_resource():
+    brief = ImageBrief.model_validate(_valid_brief_dict())
+    failed_result = ImageBuildResult(
+        brief=brief, creatives=[], status="failed", errors=["generation failed"]
+    )
+
+    with patch(
+        "src.agent.tools.image_builder.image_builder_tool._build_service"
+    ) as mock_factory, patch(
+        "src.agent.tools.image_builder.image_builder_tool.get_project_repository"
+    ) as mock_get_repo:
+        mock_service = MagicMock()
+        mock_service.build = AsyncMock(return_value=failed_result)
+        mock_factory.return_value = mock_service
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
+
+        result = await image_builder_tool.ainvoke(
+            {
+                "brief_dict": {
+                    k: v for k, v in _valid_brief_dict().items() if k != "project_id"
+                },
+                "state": {"project_id": "proj-1"},
+            }
+        )
+
+    assert result["status"] == "failed"
+    mock_repo.update_resource.assert_not_called()
 
 
 async def test_tool_raises_on_invalid_brief():

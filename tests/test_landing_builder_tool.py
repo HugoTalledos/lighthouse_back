@@ -55,6 +55,53 @@ async def test_tool_returns_dict_with_status():
     assert result["status"] == "success"
     assert result["preview_url"] == "https://preview.example.com"
     mock_repo.upsert_summary.assert_called_once_with("proj-1", "Acme", "Saves time")
+    mock_repo.update_resource.assert_called_once_with(
+        "proj-1",
+        "landing",
+        {
+            "composition": stub_result.composition,
+            "preview_url": "https://preview.example.com",
+        },
+        "pending",
+    )
+
+
+async def test_failed_tool_result_does_not_persist_a_landing_resource():
+    brief = LandingBrief.model_validate(_valid_brief_dict())
+    failed_result = LandingBuildResult(
+        brief=brief,
+        composition=None,
+        preview_url=None,
+        status="failed",
+        errors=["build failed"],
+    )
+
+    with patch(
+        "src.agent.tools.landing_builder.landing_builder_tool._build_service"
+    ) as mock_factory, patch(
+        "src.agent.tools.landing_builder.landing_builder_tool.get_project_repository"
+    ) as mock_get_repo:
+        mock_service = MagicMock()
+        mock_service.build = AsyncMock(return_value=failed_result)
+        mock_factory.return_value = mock_service
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
+
+        from src.agent.tools.landing_builder.landing_builder_tool import (
+            landing_builder_tool,
+        )
+
+        result = await landing_builder_tool.ainvoke(
+            {
+                "brief_dict": {
+                    k: v for k, v in _valid_brief_dict().items() if k != "project_id"
+                },
+                "state": {"project_id": "proj-1"},
+            }
+        )
+
+    assert result["status"] == "failed"
+    mock_repo.update_resource.assert_not_called()
 
 
 async def test_tool_raises_on_invalid_brief():

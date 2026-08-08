@@ -31,15 +31,26 @@ def _build_service() -> LandingBuilderService:
 async def landing_builder_tool(brief_dict: dict, state: Annotated[dict, InjectedState]) -> dict:
     """
     Generates a landing page from a business brief and deploys it to a
-    Firebase Hosting preview channel for review. Nothing is persisted;
-    call promote_landing_tool once the user approves this version.
+    Firebase Hosting preview channel for review. Persists the preview payload
+    as pending; call promote_landing_tool once the user approves this version.
     Input: serialized LandingBrief dict (without project_id — it is resolved
     automatically from the current conversation).
     Output: serialized LandingBuildResult dict (composition, preview_url, status, errors).
     """
     brief = LandingBrief.model_validate({**brief_dict, "project_id": state["project_id"]})
     result = await _build_service().build(brief)
-    get_project_repository().upsert_summary(
+    repository = get_project_repository()
+    repository.upsert_summary(
         brief.project_id, brief.business_name, brief.value_proposition
     )
+    if result.status == "success":
+        repository.update_resource(
+            brief.project_id,
+            "landing",
+            {
+                "composition": result.composition,
+                "preview_url": result.preview_url,
+            },
+            "pending",
+        )
     return result.model_dump(mode="json")

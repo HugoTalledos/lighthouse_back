@@ -31,9 +31,18 @@ async def image_builder_tool(brief_dict: dict, state: Annotated[dict, InjectedSt
     brief = ImageBrief.model_validate({**brief_dict, "project_id": state["project_id"]})
     service = _build_service()
     result = await service.build(brief)
-    get_project_repository().upsert_summary(
-        brief.project_id, brief.business_name, brief.value_proposition
-    )
-    return result.model_dump(
+    serialized_result = result.model_dump(
         mode="json", exclude={"creatives": {"__all__": {"image_bytes"}}}
     )
+    repository = get_project_repository()
+    repository.upsert_summary(
+        brief.project_id, brief.business_name, brief.value_proposition
+    )
+    if result.status == "success":
+        repository.update_resource(
+            brief.project_id,
+            "images",
+            {"creatives": serialized_result["creatives"]},
+            "pending",
+        )
+    return serialized_result

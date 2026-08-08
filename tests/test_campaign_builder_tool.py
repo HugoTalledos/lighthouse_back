@@ -56,7 +56,9 @@ async def test_tool_returns_dict_with_status(monkeypatch):
         return_value=mock_client,
     ), patch(
         "src.agent.tools.campaign_builder.campaign_builder_tool.get_project_repository"
-    ):
+    ) as mock_get_repo:
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({
             "brief_dict": _valid_brief_dict(), "state": {"project_id": "proj-1"},
@@ -64,6 +66,12 @@ async def test_tool_returns_dict_with_status(monkeypatch):
 
     assert result["status"] == "success"
     assert result["campaign"]["name"] == "Acme Campaign"
+    mock_repo.update_resource.assert_called_once_with(
+        "proj-1",
+        "campaign",
+        {"config": _canned_campaign().model_dump(mode="json")},
+        "pending",
+    )
 
 
 async def test_tool_result_is_serializable(monkeypatch):
@@ -77,7 +85,9 @@ async def test_tool_result_is_serializable(monkeypatch):
         return_value=mock_client,
     ), patch(
         "src.agent.tools.campaign_builder.campaign_builder_tool.get_project_repository"
-    ):
+    ) as mock_get_repo:
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({
             "brief_dict": _valid_brief_dict(), "state": {"project_id": "proj-1"},
@@ -106,7 +116,9 @@ async def test_tool_captures_llm_error_in_result(monkeypatch):
         return_value=mock_client,
     ), patch(
         "src.agent.tools.campaign_builder.campaign_builder_tool.get_project_repository"
-    ):
+    ) as mock_get_repo:
+        mock_repo = MagicMock()
+        mock_get_repo.return_value = mock_repo
         from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
         result = await campaign_builder_tool.ainvoke({
             "brief_dict": _valid_brief_dict(), "state": {"project_id": "proj-1"},
@@ -115,3 +127,4 @@ async def test_tool_captures_llm_error_in_result(monkeypatch):
     assert result["status"] == "failed"
     assert "LLM timeout" in result["errors"][0]
     assert result["campaign"] is None
+    mock_repo.update_resource.assert_not_called()
