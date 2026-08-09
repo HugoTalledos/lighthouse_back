@@ -1,6 +1,6 @@
-"""Cubre el guard de arranque en src/agent/config.py: el modelo orquestador
-solo soporta ChatOllama, así que un `agent.provider` distinto de "ollama"
-debe reventar el import con un mensaje accionable.
+"""Cubre el arranque de src/agent/config.py: el provider declarado en
+`agent` decide qué chat model se construye, y un provider no soportado por el
+orquestador debe reventar el import con un mensaje accionable.
 """
 from __future__ import annotations
 import importlib
@@ -43,14 +43,26 @@ def reload_config_module(monkeypatch):
     importlib.reload(config_module)
 
 
-def test_guard_raises_when_agent_provider_is_not_ollama(reload_config_module):
+def test_openrouter_provider_builds_the_agent_model(reload_config_module, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "sk-test")
     fake_config = _config_with_agent(provider="openrouter", model="openai/gpt-4o")
 
-    with pytest.raises(ValueError, match="openrouter"):
+    reloaded = reload_config_module(fake_config)
+
+    assert reloaded.model.bound.model_name == "openai/gpt-4o"
+
+
+def test_openrouter_provider_without_api_key_fails_at_import(
+    reload_config_module, monkeypatch
+):
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    fake_config = _config_with_agent(provider="openrouter", model="openai/gpt-4o")
+
+    with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
         reload_config_module(fake_config)
 
 
-def test_guard_passes_and_model_uses_resolved_agent_settings(reload_config_module):
+def test_ollama_provider_model_uses_resolved_agent_settings(reload_config_module):
     fake_config = _config_with_agent(
         provider="ollama", model="qwen2.5-coder:7b", temperature=0.2,
         max_tokens=500, top_p=0.8,
@@ -62,6 +74,7 @@ def test_guard_passes_and_model_uses_resolved_agent_settings(reload_config_modul
     assert bound_model.model == "qwen2.5-coder:7b"
     assert bound_model.temperature == 0.2
     assert bound_model.top_p == 0.8
+    assert bound_model.num_predict == 500
 
 
 def test_metadata_tool_is_registered_before_builder_tools(reload_config_module):

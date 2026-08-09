@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
-from langchain_ollama import ChatOllama
 from langgraph.checkpoint.memory import MemorySaver
 
+from src.agent.infrastructure.llm.chat_model_factory import build_chat_model
 from src.shared.llm_config.loader import load_llm_config
 from src.agent.tools.project_metadata_tool import update_project_metadata_tool
 from src.agent.tools.campaign_builder.campaign_builder_tool import campaign_builder_tool
@@ -26,20 +26,7 @@ tools = [
     promote_landing_tool,
 ]
 
-_agent_settings = load_llm_config().for_agent()
-
-if _agent_settings.provider != "ollama":
-    raise ValueError(
-        f"El modelo orquestador solo soporta provider 'ollama' por ahora, "
-        f"pero config/llm.*.json declara {_agent_settings.provider!r} en 'agent'."
-    )
-
-model = ChatOllama(
-    model=_agent_settings.model,
-    temperature=_agent_settings.temperature,
-    max_tokens=_agent_settings.max_tokens,
-    top_p=_agent_settings.top_p,
-).bind_tools(tools)
+model = build_chat_model(load_llm_config().for_agent()).bind_tools(tools)
 
 
 ## El thread_id es el id de la conversación. Como es el mismo va a conservar el estado de la conversación.

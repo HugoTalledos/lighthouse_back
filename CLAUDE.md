@@ -22,7 +22,7 @@ python3 -m pytest -v -k "test_tool_returns_dict_with_status"
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENROUTER_API_KEY` | Yes (cuando algún consumidor usa provider `openrouter` en `config/llm.*.json`) | OpenRouter API key; shared by the LLM client and the image generator |
+| `OPENROUTER_API_KEY` | Yes (cuando algún consumidor usa provider `openrouter` en `config/llm.*.json`) | OpenRouter API key; shared by the LLM client, el chat model del agente y the image generator |
 | `OLLAMA_BASE_URL` | No (when either provider is `ollama`) | Ollama server URL; defaults to `http://localhost:11434` |
 | `FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket name, e.g. `my-project.appspot.com` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | Path to Firebase service account JSON; omit to use Application Default Credentials |
@@ -54,8 +54,14 @@ Las claves válidas de `tools` son `campaign_builder`, `landing_builder` e
 `image_builder`. El archivo se lee y valida **al arranque**
 (`src/shared/llm_config/loader.py`), así que un typo revienta al levantar el server.
 
-El bloque `agent` configura el modelo orquestador, que se construye con
-`ChatOllama` y por tanto debe declarar provider `ollama`.
+El bloque `agent` configura el modelo orquestador. Su `provider` elige la
+estrategia de construcción en `src/agent/infrastructure/llm/chat_model_factory.py`:
+`ollama` construye un `ChatOllama` local, `openrouter` construye un cliente OpenAI
+apuntado a `https://openrouter.ai/api/v1` (requiere `OPENROUTER_API_KEY`). Un
+provider fuera de ese dict revienta al importar `src/agent/config.py`.
+
+En la rama `ollama`, `max_tokens` se mapea a `num_predict`, que es el parámetro
+que Ollama entiende.
 
 ## Architecture
 
