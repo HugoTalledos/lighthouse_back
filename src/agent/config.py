@@ -26,7 +26,10 @@ tools = [
     promote_landing_tool,
 ]
 
-model = build_chat_model(load_llm_config().for_agent()).bind_tools(tools)
+config = load_llm_config().for_agent()
+model_loaded = build_chat_model(config)
+
+model = model_loaded.bind_tools(tools)
 
 
 ## El thread_id es el id de la conversación. Como es el mismo va a conservar el estado de la conversación.
