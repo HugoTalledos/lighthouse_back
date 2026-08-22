@@ -9,14 +9,13 @@ from ..domain.ports import LLMClientPort
 
 T = TypeVar("T", bound=BaseModel)
 
-_TIMEOUT = 60.0
-
 
 class OllamaLocalClient(LLMClientPort):
-    def __init__(self, model: str, temperature: float = 0.7) -> None:
+    def __init__(self, model: str, temperature: float = 0.7, timeout: float = 60.0) -> None:
         self._base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self._model = model
         self._temperature = temperature
+        self._timeout = timeout
 
     def _resolve_temperature(self, temperature: float | None) -> float:
         return self._temperature if temperature is None else temperature
@@ -33,7 +32,7 @@ class OllamaLocalClient(LLMClientPort):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
                 f"{self._base_url}/api/chat",
                 json={
@@ -60,7 +59,7 @@ class OllamaLocalClient(LLMClientPort):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
                 f"{self._base_url}/api/chat",
                 json={
@@ -94,7 +93,7 @@ class OllamaLocalClient(LLMClientPort):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
                 f"{self._base_url}/api/chat",
                 json={

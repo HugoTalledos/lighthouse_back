@@ -10,14 +10,14 @@ from src.shared.openrouter.credentials import OpenRouterCredentials
 T = TypeVar("T", bound=BaseModel)
 
 _CHAT_URL = "https://openrouter.ai/api/v1/chat/completions"
-_TIMEOUT = 60.0
 
 
 class OpenRouterClient(LLMClientPort):
-    def __init__(self, model: str, temperature: float = 0.7) -> None:
+    def __init__(self, model: str, temperature: float = 0.7, timeout: float = 60.0) -> None:
         self._credentials = OpenRouterCredentials()
         self._model = model
         self._temperature = temperature
+        self._timeout = timeout
 
     def _resolve_temperature(self, temperature: float | None) -> float:
         return self._temperature if temperature is None else temperature
@@ -34,7 +34,7 @@ class OpenRouterClient(LLMClientPort):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
                 _CHAT_URL,
                 headers=self._credentials.headers(),
@@ -64,7 +64,7 @@ class OpenRouterClient(LLMClientPort):
         schema = response_type.model_json_schema()
         response_name = response_type.__name__
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
                 _CHAT_URL,
                 headers=self._credentials.headers(),
@@ -103,7 +103,7 @@ class OpenRouterClient(LLMClientPort):
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
                 _CHAT_URL,
                 headers=self._credentials.headers(),
