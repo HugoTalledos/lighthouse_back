@@ -39,3 +39,17 @@ def test_two_settings_produce_independently_configured_clients():
 
     assert (a._model, a._temperature) == ("llama3.1", 0.1)
     assert (b._model, b._temperature) == ("mistral", 0.9)
+
+
+def test_timeout_defaults_to_60_seconds():
+    client = build_llm_client(LLMSettings(provider="ollama", model="llama3.1", temperature=0.3))
+
+    assert client._timeout == 60.0
+
+
+def test_timeout_override_reaches_the_client():
+    client = build_llm_client(
+        LLMSettings(provider="ollama", model="llama3.1", temperature=0.3, timeout=180.0)
+    )
+
+    assert client._timeout == 180.0

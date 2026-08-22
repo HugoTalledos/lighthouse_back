@@ -107,3 +107,10 @@ async def test_service_never_raises():
     service = CampaignBuilderService(FakeLLMClient(raise_exc=Exception("unexpected")))
     result = await service.build(_brief())
     assert isinstance(result, CampaignConfigResult)
+
+
+async def test_exception_with_empty_str_falls_back_to_exception_type_name():
+    service = CampaignBuilderService(FakeLLMClient(raise_exc=TimeoutError()))
+    result = await service.build(_brief())
+    assert result.status == "failed"
+    assert result.errors == ["TimeoutError"]
