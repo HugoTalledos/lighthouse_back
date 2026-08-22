@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 import logging
+import time
 from typing import Any, AsyncIterator
 
 from ..domain.events import (
@@ -9,6 +10,35 @@ from ..domain.events import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _log_event(event: ChatEvent, *, thread_id: str, project_id: str, tool_timers: dict) -> None:
+    name = event.event
+    data = event.data
+    extra: dict = {"thread_id": thread_id, "project_id": project_id, "event": name}
+
+    if name == "tool_call":
+        tool = data.get("name", "")
+        extra["tool"] = tool
+        tool_timers[tool] = time.perf_counter()
+        logger.info("tool_call", extra=extra)
+
+    elif name == "tool_result":
+        tool = data.get("name", "")
+        extra["tool"] = tool
+        extra["status"] = data.get("status", "unknown")
+        start = tool_timers.pop(tool, None)
+        if start is not None:
+            extra["duration_ms"] = round((time.perf_counter() - start) * 1000)
+        level = logging.WARNING if extra["status"] in {"failed", "partial"} else logging.INFO
+        logger.log(level, "tool_result", extra=extra)
+
+    elif name == "error":
+        extra["error"] = data.get("message", "")
+        logger.error("agent_error", extra=extra)
+
+    elif name == "done":
+        logger.info("turn_done", extra=extra)
 
 
 def _parse_tool_content(content: Any) -> dict:
@@ -54,6 +84,11 @@ async def stream_chat(
     """
     yield start_event(thread_id)
     stream = None
+    tool_timers: dict = {}
+    logger.info(
+        "turn_start",
+        extra={"thread_id": thread_id, "project_id": project_id, "event": "start"},
+    )
 
     try:
         stream = graph.astream(
@@ -71,19 +106,19 @@ async def stream_chat(
                     continue
                 events = _tool_events(payload) if node == "tools" else _chatbot_events(payload)
                 for event in events:
+                    _log_event(event, thread_id=thread_id, project_id=project_id, tool_timers=tool_timers)
                     yield event
     except Exception:  # noqa: BLE001 - el turno entero se cayó
-        logger.exception("chat turn failed for thread %s", thread_id)
-        # No se manda el detalle crudo de la excepción al cliente: puede
-        # contener rutas del filesystem, URLs internas o nombres de buckets.
-        # El detalle completo ya quedó en el log vía logger.exception.
+        logger.exception(
+            "turn_failed",
+            extra={"thread_id": thread_id, "project_id": project_id, "event": "error"},
+        )
         yield error_event("El turno falló por un error interno. Intenta de nuevo.")
     finally:
-        # Si el cliente se desconecta a mitad del turno, cerramos el
-        # generador del grafo explícitamente. Los dobles de test no
-        # implementan aclose, así que protegemos la llamada.
         aclose = getattr(stream, "aclose", None)
         if aclose is not None:
             await aclose()
 
-    yield done_event(thread_id, project_id)
+    done = done_event(thread_id, project_id)
+    _log_event(done, thread_id=thread_id, project_id=project_id, tool_timers=tool_timers)
+    yield done

@@ -1,9 +1,41 @@
 from __future__ import annotations
+import json
+import logging
 import os
 import secrets
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+class _JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        doc: dict = {
+            "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S"),
+            "level": record.levelname,
+            "logger": record.name,
+            "msg": record.getMessage(),
+        }
+        for key, value in record.__dict__.items():
+            if key not in {
+                "name", "msg", "args", "levelname", "levelno", "pathname",
+                "filename", "module", "exc_info", "exc_text", "stack_info",
+                "lineno", "funcName", "created", "msecs", "relativeCreated",
+                "thread", "threadName", "processName", "process", "message",
+                "taskName",
+            } and not key.startswith("_"):
+                doc[key] = value
+        if record.exc_info:
+            doc["exc"] = self.formatException(record.exc_info)
+        return json.dumps(doc, default=str)
+
+
+def _configure_logging() -> None:
+    handler = logging.StreamHandler()
+    handler.setFormatter(_JsonFormatter())
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    root.handlers = [handler]
+
 
 from src.agent.graph import build_graph
 from src.agent.infrastructure.rest.chat_routes import build_chat_router
@@ -27,7 +59,9 @@ def _allowed_origins() -> list[str]:
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
-def create_app(repo=None, graph=None) -> FastAPI:
+def create_app(repo=None, graph=None, *, configure_logging: bool = True) -> FastAPI:
+    if configure_logging:
+        _configure_logging()
     app = FastAPI(title="Lighthouse API")
     app.add_middleware(
         CORSMiddleware,
