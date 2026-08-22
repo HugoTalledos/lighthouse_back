@@ -26,6 +26,7 @@ python3 -m pytest -v -k "test_tool_returns_dict_with_status"
 | `OLLAMA_BASE_URL` | No (when either provider is `ollama`) | Ollama server URL; defaults to `http://localhost:11434` |
 | `FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket name, e.g. `my-project.appspot.com` |
 | `GOOGLE_APPLICATION_CREDENTIALS` | No | Path to Firebase service account JSON; omit to use Application Default Credentials |
+| `FIREBASE_HOSTING_SITE_ID` | Yes (cuando se usa `landing_builder_tool` / `promote_landing_tool`) | Site ID (no Project ID) del sitio de Firebase Hosting usado para preview channels |
 | `API_KEY` | No | Si está seteada, `/chat` y `/projects` exigen el header `x-api-key`. Sin ella el API queda abierto |
 | `ALLOWED_ORIGINS` | No | Orígenes CORS separados por comas; default `*` |
 | `APP_ENV` | No | Selecciona `config/llm.{APP_ENV}.json`; default `dev` |
