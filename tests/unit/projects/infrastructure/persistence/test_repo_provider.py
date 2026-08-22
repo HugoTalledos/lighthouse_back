@@ -7,6 +7,9 @@ from src.projects.infrastructure.persistence.repo_provider import _LazyProjectRe
 
 
 class RecoveredProjectRepository:
+    def __init__(self, persisted: list[Project] | None = None) -> None:
+        self._persisted = persisted or []
+
     def create_for_thread(self, thread_id: str) -> Project:
         now = datetime.now(timezone.utc)
         return Project(
@@ -15,6 +18,9 @@ class RecoveredProjectRepository:
             created_at=now,
             updated_at=now,
         )
+
+    def list(self) -> list[Project]:
+        return self._persisted
 
 
 def test_get_returns_none_when_construction_raises():
@@ -90,3 +96,31 @@ def test_update_resource_is_noop_when_construction_fails():
         side_effect=RuntimeError("no credentials"),
     ):
         provider.update_resource("p1", "campaign", {"config": {}}, "approved")  # must not raise
+
+
+def test_list_returns_ephemeral_projects_when_construction_fails():
+    provider = _LazyProjectRepository()
+    with patch(
+        "src.projects.infrastructure.persistence.repo_provider.FirestoreProjectRepository",
+        side_effect=RuntimeError("no credentials"),
+    ):
+        created = provider.create_for_thread("t1")
+        result = provider.list()
+
+    assert result == [created]
+
+
+def test_list_merges_persisted_and_ephemeral_projects():
+    provider = _LazyProjectRepository()
+    now = datetime.now(timezone.utc)
+    persisted_project = Project(
+        project_id="persisted-project", thread_ids=["t2"], created_at=now, updated_at=now,
+    )
+    with patch(
+        "src.projects.infrastructure.persistence.repo_provider.FirestoreProjectRepository",
+        side_effect=[RuntimeError("no credentials"), RecoveredProjectRepository([persisted_project])],
+    ):
+        ephemeral_project = provider.create_for_thread("t1")
+        result = provider.list()
+
+    assert result == [persisted_project, ephemeral_project]

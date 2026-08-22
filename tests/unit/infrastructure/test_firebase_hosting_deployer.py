@@ -61,6 +61,11 @@ async def test_deploy_preview_full_flow(monkeypatch, tmp_path, httpx_mock: HTTPX
             "https://firebasehosting.googleapis.com/v1beta1/sites/my-site/"
             f"channels/proj-1/releases?versionName={version_name}"
         ),
+        json={"name": "sites/my-site/channels/proj-1/releases/1"},
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://firebasehosting.googleapis.com/v1beta1/sites/my-site/channels/proj-1",
         json={"url": "https://proj-1--my-site.web.app", "expireTime": "2026-07-17T00:00:00Z"},
     )
 
@@ -111,7 +116,12 @@ async def test_deploy_preview_ignores_channel_already_exists(monkeypatch, tmp_pa
             "https://firebasehosting.googleapis.com/v1beta1/sites/my-site/"
             f"channels/proj-1/releases?versionName={version_name}"
         ),
-        json={"url": "https://proj-1--my-site.web.app", "expireTime": None},
+        json={"name": "sites/my-site/channels/proj-1/releases/1"},
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://firebasehosting.googleapis.com/v1beta1/sites/my-site/channels/proj-1",
+        json={"url": "https://proj-1--my-site.web.app"},
     )
 
     with patch("google.auth.default", return_value=(_fake_credentials("fake-token"), "proj")), \
