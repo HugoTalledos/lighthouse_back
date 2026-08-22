@@ -1,7 +1,10 @@
 from __future__ import annotations
+import logging
 from src.shared.llm.domain.ports import LLMClientPort
 from ..domain.models import CampaignBrief, Campaign, CampaignConfigResult
 from ..domain.prompt_builder import build_campaign_prompt
+
+logger = logging.getLogger(__name__)
 
 
 class CampaignBuilderService:
@@ -13,15 +16,20 @@ class CampaignBuilderService:
         try:
             campaign = await self._llm.generate_structured(user, Campaign, system=system)
             return CampaignConfigResult(
-                brief=brief, 
+                brief=brief,
                 campaign=campaign,
                 status="success",
                 errors=[]
             )
         except Exception as e:
+            logger.exception(
+                "campaign_builder_service failed to generate campaign for project_id=%s",
+                brief.project_id,
+            )
+            message = str(e) or type(e).__name__
             return CampaignConfigResult(
                 brief=brief,
                 campaign=None,
                 status="failed",
-                errors=[str(e)],
+                errors=[message],
             )
