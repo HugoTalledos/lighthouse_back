@@ -50,6 +50,17 @@ class _LazyProjectRepository:
         repo = self._get()
         return None if repo is None else repo.get(project_id)
 
+    def list(self):
+        repo = self._get()
+        persisted = repo.list() if repo is not None else []
+        persisted_ids = {project.project_id for project in persisted}
+        ephemeral = [
+            project
+            for project in self._ephemeral_by_thread.values()
+            if project.project_id not in persisted_ids
+        ]
+        return persisted + ephemeral
+
     def upsert_summary(self, project_id: str, business_name: str, value_proposition: str) -> None:
         repo = self._get()
         if repo is None:
