@@ -14,6 +14,7 @@ from ..domain.ports import HostingPort, PreviewDeployment
 _HOSTING_API = "https://firebasehosting.googleapis.com/v1beta1"
 _SCOPES = ["https://www.googleapis.com/auth/firebase.hosting"]
 _TIMEOUT = 60.0
+_PREVIEW_CHANNEL_TTL = "86400s"
 
 
 class FirebaseHostingDeployer(HostingPort):
@@ -37,7 +38,8 @@ class FirebaseHostingDeployer(HostingPort):
 
         async with httpx.AsyncClient(timeout=_TIMEOUT, headers=headers) as client:
             create_channel = await client.post(
-                f"{_HOSTING_API}/sites/{self._site_id}/channels?channelId={channel_id}"
+                f"{_HOSTING_API}/sites/{self._site_id}/channels?channelId={channel_id}",
+                json={"ttl": _PREVIEW_CHANNEL_TTL},
             )
             if create_channel.status_code != 409:
                 create_channel.raise_for_status()
@@ -75,11 +77,18 @@ class FirebaseHostingDeployer(HostingPort):
                 f"?versionName={version_name}"
             )
             release.raise_for_status()
-            release_data = release.json()
+
+            # The release response is a `Release` resource, which has no `url` —
+            # that field lives on the `Channel` resource, so fetch it separately.
+            channel = await client.get(
+                f"{_HOSTING_API}/sites/{self._site_id}/channels/{channel_id}"
+            )
+            channel.raise_for_status()
+            channel_data = channel.json()
 
         return PreviewDeployment(
-            url=release_data["url"],
-            expire_time=release_data.get("expireTime"),
+            url=channel_data["url"],
+            expire_time=channel_data.get("expireTime"),
         )
 
     def _hash_files(self, dist_dir: str) -> tuple[dict[str, str], dict[str, bytes]]:
