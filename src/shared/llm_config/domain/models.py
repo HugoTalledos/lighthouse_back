@@ -16,6 +16,7 @@ class LLMSettings(BaseModel):
     temperature: float
     max_tokens: int | None = None
     top_p: float | None = None
+    timeout: float = 60.0
 
 
 class AppLLMConfig(BaseModel):
