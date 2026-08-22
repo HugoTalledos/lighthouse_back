@@ -1,17 +1,17 @@
 {
   "defaults": {
     "provider": "ollama",
-    "model": "qwen2.5-coder:7b",
+    "model": "deepseek-r1:14b",
     "temperature": 0.5
   },
   "agent": {
-    "model": "qwen2.5-coder:7b",
+    "model": "qwen3.5:9b-mlx",
     "temperature": 0.8,
     "max_tokens": 1000,
     "top_p": 1.0
   },
   "tools": {
-    "campaign_builder": {},
+    "campaign_builder": { "timeout": 360.0 },
     "landing_builder": {},
     "image_builder": {
       "provider": "ollama",
