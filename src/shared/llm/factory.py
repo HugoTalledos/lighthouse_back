@@ -13,4 +13,6 @@ _CLIENTS = {
 
 def build_llm_client(settings: LLMSettings) -> LLMClientPort:
     client_class = _CLIENTS[settings.provider]
-    return client_class(model=settings.model, temperature=settings.temperature)
+    return client_class(
+        model=settings.model, temperature=settings.temperature, timeout=settings.timeout
+    )
